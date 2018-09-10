@@ -1,0 +1,22 @@
+---
+title: "Anonymous Functions in R"
+author: "Daniel Emaasit"
+date: "February 27, 2016"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+Note: This is from *Functional Programming in R*  [https://github.com/Emaasit/Functional-Programming-in-R](https://github.com/Emaasit/Functional-Programming-in-R) by Daniel Emaasit   
+
+
+## Anonymous Functions
+If you don't give a function a name, you get an anonymous function
+```{r anonymous_func}
+lapply(mtcars, function(x) length(unique(x)))
+Filter(function(x) !is.numeric(x), mtcars)
+```

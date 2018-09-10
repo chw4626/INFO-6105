@@ -1,0 +1,62 @@
+---
+title: "Lists of Functions"
+author: "Daniel Emaasit"
+date: "February 28, 2016"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+Note: This is from *Functional Programming in R*  [https://github.com/Emaasit/Functional-Programming-in-R](https://github.com/Emaasit/Functional-Programming-in-R) by Daniel Emaasit   
+
+## List of Functions
+Functions can be stored as lists. Hence you can store a group of related functions in a list, like:
+```{r example}
+compute_mean <- list(
+  base = function(x) mean(x),
+  manual = function(x) sum(x) / length(x)
+)
+
+x <- runif(n = 1e5)
+compute_mean$base(x)
+compute_mean$manual(x)
+
+## To call each function, we can use lapply
+lapply(compute_mean, function(f) f(x))
+```
+
+Another example for descriptive statistics
+```{r descriptive_stats}
+compute_stats <- function(x) {
+  desriptive_stats <- list(
+  sum = function(x) sum(x, na.rm = TRUE),
+  mean = function(x) mean(x, na.rm = TRUE),
+  median = function(x) median(x, na.rm = TRUE)
+  )
+  lapply(desriptive_stats, function(f) f(x))
+}
+
+x <- runif(1e6)
+compute_stats(x)
+```
+
+Or remove duplication by doing this:
+```{r descriptive_stats_2}
+compute_stats <- function(x) {
+  desriptive_stats <- list(
+  sum = function(x) sum(x),
+  mean = function(x) mean(x),
+  median = function(x) median(x)
+  )
+  lapply(desriptive_stats, function(f) f(x))
+}
+
+x <- runif(1e6)
+compute_stats(x)
+```
+
+### Moving lists of functions to the global environment

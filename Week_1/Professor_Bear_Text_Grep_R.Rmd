@@ -1,0 +1,237 @@
+---
+title: "Text Processing in R"
+author: "Professor Bear"
+date: "September 1, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+In this lesson we'll learn text processing and regular expressions in R.
+
+
+# Additional packages needed
+ 
+* If necessary install the followings packages.
+
+`install.packages("stringr");`   
+
+
+```{r}
+library(stringr)
+```
+
+# Text Processing in R
+
+Lets start with an example string.
+
+```{r}
+my_string <- "Find a goal you are passionate about. Then pursue it. Relentlessly."
+my_string
+lower_string <- tolower(my_string)
+lower_string
+my_string_vector <- str_split(my_string, " ")
+my_string_vector
+
+```
+
+Here's a quick cheat-sheet on [string manipulation functions in R](http://www.statmethods.net/management/functions.html), from Quick-R’s list of String Functions.
+
+```{r, eval=FALSE}
+substr(x, start=n1, stop=n2)
+grep(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
+gsub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
+gregexpr(pattern, text, ignore.case=FALSE, perl=FALSE,
+fixed=FALSE)
+strsplit(x, split)
+paste(…, sep="", collapse=NULL)
+sprintf(fmt, …)
+toupper/tolower(x)
+nchar(x)
+```
+
+# Regular Expressions and Grep
+
+In theoretical computer science and formal language theory, a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) (abbreviated regex or regexp and sometimes called a rational expression) is a sequence of characters that define a search pattern, mainly for use in pattern matching with strings, or string matching, i.e. "find and replace"-like operations. The concept arose in the 1950s, when the American mathematician Stephen Kleene formalized the description of a regular language, and came into common use with the Unix text processing utilities ed, an editor, and [grep](https://en.wikipedia.org/wiki/Grep) (global regular expression print), a filter.
+
+grep is a command-line utility for searching plain-text data sets for lines matching a regular expression. Grep was originally developed for the Unix operating system, but is available today for all Unix-like systems and is built in to languages like python and Perl.
+
+# Regular Expressions Examples
+
+Basic regex syntax
+
+```
+.	Normally matches any character except a newline.  
+
+When you match a pattern within parentheses, you can use any of $1, $2, ... later to refer to the previously matched pattern.	
+
++	Matches the preceding pattern element one or more times.  	
+?	Matches the preceding pattern element zero or one times.  	
+*	Matches the preceding pattern element zero or more times.  
+|	Separates alternate possibilities.	 
+
+\w	Matches an alphanumeric character, including "_";  same as [A-Za-z0-9_] in ASCII, and
+[\p{Alphabetic}\p{GC=Mark}\p{GC=Decimal_Number}\p{GC=Connector_Punctuation}]  
+
+\W	Matches a non-alphanumeric character, excluding "_";
+same as [^A-Za-z0-9_] in ASCII, and
+[^\p{Alphabetic}\p{GC=Mark}\p{GC=Decimal_Number}\p{GC=Connector_Punctuation}]  
+
+\s	Matches a whitespace character,
+which in ASCII are tab, line feed, form feed, carriage return, and space;  
+
+\S	Matches anything BUT a whitespace.	 
+
+\d	Matches a digit;
+same as [0-9] in ASCII;  
+
+\D	Matches a non-digit;
+
+^	Matches the beginning of a line or string.	  
+
+$	Matches the end of a line or string.	  
+```
+
+Some simple regex examples 
+
+```
+ {^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$}  # Floating Point Number
+
+{^[A-Za-z]+$}   # Only letters.
+
+ {^[[:alpha?:]]+$} # Only letters, the Unicode way.
+
+ {(.)\1{3}} $string {\1} result # Back References 
+
+(\[0-9]{1,3})\.(\[0-9]{1,3})\.(\[0-9]{1,3})\.(\[0-9]{1,3}) # IP Numbers 
+```
+
+# Regular Expressions in R
+
+```{r}
+letters
+grep("[a-z]", letters)
+grep("[x-z]", letters)
+grep("[bear]", letters)
+grep("[A-Z]", letters)
+grep("[AB]", letters)
+grep("[AB]", letters,ignore.case = TRUE)
+grep("[a-zA-Z]", letters)
+grep("[azAZ]", letters)
+seuss <- c("You have brains in your head.",
+           "You have feet in your shoes.", 
+           "You can steer yourself any direction you choose.",            
+           "You're on your own.", 
+           "And you know what you know.", 
+           "And YOU are the one who'll decide where to go...",            
+           "- Dr. Seuss")
+grep("you", seuss)
+if(length(i <- grep("in", seuss)))
+  cat("'in' appears at least once in\n\t", seuss[i], "\n")
+i # 1 and 2
+seuss[i]
+
+ ## Modify all 'a' or 'b's;  "\" must be escaped 
+s<-gsub("([ab])", "\\1-z\\1_s", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+s<-gsub("([ab])", "-z_s", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+s<-gsub("([ab])", "\\a\\b", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+stop.words <- c("The", "for", "are",
+          "to",  "your", 
+         "to", "and", "the", 
+         "is", "your",  "and", "is",
+         "it", "for", "all", "its", "it's")
+
+seuss.re<-regexpr("[ ]+",seuss)
+seuss.re
+seuss.re<-gregexpr("[ ]+",seuss)
+seuss.re
+
+
+## trim trailing white space
+str <- " You have brains in your head      "
+str
+str<-sub("[ ]+$", "", str)  ## trailing spaces only
+str
+str<-sub("^[ ]+", "", str)  ## leading spaces only
+str
+sub("[[:space:]]+$", "", str) ## white space, POSIX-style
+sub("\\s+$", "", str, perl = TRUE) ## Perl-style white space
+
+## capitalizing
+txt <- "You have brains in your head"
+gsub("(\\w)(\\w*)", "\\U\\1\\L\\2", txt, perl=TRUE)
+gsub("\\b(\\w)",    "\\U\\1",       txt, perl=TRUE)
+
+txt2 <- "You have feet in your shoes."
+gsub("(\\w)(\\w*)(\\w)", "\\U\\1\\E\\2\\U\\3", txt2, perl=TRUE)
+sub("(\\w)(\\w*)(\\w)", "\\U\\1\\E\\2\\U\\3", txt2, perl=TRUE)
+
+## Decompose a URL into its components.
+url <- "http://nikbearbrown/machine/learning/"
+m <- regexec("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)", url)
+m
+regmatches(url, m)
+## parts of a URL:
+URL_parts <- function(u) {
+  m <- regexec("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)", u)
+  parts <- do.call(rbind,
+                   lapply(regmatches(u, m), `[`, c(3L, 4L, 6L, 7L)))
+  colnames(parts) <- c("protocol","host","port","path")
+  parts
+}
+URL_parts(url)
+
+# Spilt text
+seuss
+seuss[1]
+sp<-strsplit(seuss[1], "a") # "You have brains in your head."
+s<-"You    have   brains  in  your head. "
+sp<-strsplit(seuss[1], " ") 
+sp
+sp<-strsplit(s," ") 
+sp
+sp<-strsplit(s,"[ ]+") 
+sp
+sp<-strsplit(s,"[ ]+",perl = TRUE) 
+sp
+```
+
+Cleaning text example.  
+
+Text Processing in R
+
+```{r}
+clean.string <- function(string){
+    # Lowercase
+    temp <- tolower(string)
+    #' Remove everything that is not a number or letter (may want to keep more 
+    #' stuff in your actual analyses). 
+    temp <- stringr::str_replace_all(temp,"[^a-zA-Z\\s]", " ")
+    # Shrink down to just one white space
+    temp <- stringr::str_replace_all(temp,"[\\s]+", " ")
+    # Split it
+    temp <- stringr::str_split(temp, " ")[[1]]
+    # Get rid of trailing "" if necessary
+    indexes <- which(temp == "")
+    if(length(indexes) > 0){
+      temp <- temp[-indexes]
+    } 
+    return(temp)
+}
+clean.string(my_string)
+```
+
+
+```
+
+
+
+
+
+
+
+```
+

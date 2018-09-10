@@ -1,0 +1,40 @@
+---
+title: "Motivation for Functional Programming in R"
+author: "Daniel Emaasit"
+date: "February 27, 2016"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+Note: This is from *Functional Programming in R*  [https://github.com/Emaasit/Functional-Programming-in-R](https://github.com/Emaasit/Functional-Programming-in-R) by Daniel Emaasit   
+
+## Motivation
+Advantages of FP:
+
+* makes code more compact
+* removes duplication
+* makes code easy to understand
+
+The "DRY" Principle: "Do not repeat yourself"
+```{r motivate, eval = FALSE}
+fix_missing <- function(x) {
+  x[x == -99] <- NA
+  x
+}
+df[] <- lapply(df, fix_missing)
+
+df[1:5] <- lapply(df[1:5], fix_missing)
+```
+
+### Removing duplication
+```{r remove_dup}
+find_summary <- function(x) {
+  funs <- c(mean, median, sd, mad, IQR)
+  lapply(funs, function(f) f(x, na.rm = TRUE))
+}
+```

@@ -1,0 +1,147 @@
+---
+title: "Professor Bear - Importing Data in R"
+author: "Bear"
+date: "September 1, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+The first step in data analysis is getting the data in to R. Small datasets often come in the form of Excel  (`.xls`), a comma delimited (Comma-Separated
+Value/CSV or `.csv`) or tab delimited 
+(Tab-Separated Value/TSV/TXT e.g. `.txt`) files. 
+
+## Paths and the Working Directory
+
+First one needs to identify your *working directory*. This is the directory or folder in which R will save or look for files by default. 
+As a reminder, you can see your working directory by typing:
+
+```{r}
+getwd()
+```
+
+You can also change your working directory using the function `setwd()`. Or you can change it through RStudio by clicking on "Session". 
+
+## Functions to read in data into R
+
+The are several functions in base R that are available for reading data.
+
+## read.csv
+
+read.csv reads a file in csv format and creates a data frame from it, with cases corresponding to lines and variables to fields in the file.
+
+```{r,eval=FALSE}
+?read.csv
+```
+
+Type `?read.csv` to learn how to use its arguments.
+
+
+```{r,eval=FALSE}
+read.csv(file, header = TRUE, sep = ",", quote = "\"",
+         dec = ".", fill = TRUE, comment.char = "", ...)
+```
+
+Using read.csv to load some data.
+
+```{r read.csv}
+# Load our data using read.csv
+
+data_url <- 'https://raw.githubusercontent.com/vincentarelbundock/Rdatasets/master/csv/psych/galton.csv'
+galton <- read.csv(url(data_url))
+class(galton)
+head(galton)
+summary(galton)
+```
+
+## read.table
+
+read.table reads a file in table format and creates a data frame from it, with cases corresponding to lines and variables to fields in the file.
+
+```{r,eval=FALSE}
+?read.table
+```
+
+Type `?read.table` to learn how to use its arguments.
+
+```{r,eval=FALSE}
+read.table(file, header = FALSE, sep = "", quote = "\"'",
+           dec = ".", numerals = c("allow.loss", "warn.loss", "no.loss"),
+           row.names, col.names, as.is = !stringsAsFactors,
+           na.strings = "NA", colClasses = NA, nrows = -1,
+           skip = 0, check.names = TRUE, fill = !blank.lines.skip,
+           strip.white = FALSE, blank.lines.skip = TRUE,
+           comment.char = "#",
+           allowEscapes = FALSE, flush = FALSE,
+           stringsAsFactors = default.stringsAsFactors(),
+           fileEncoding = "", encoding = "unknown", text, skipNul = FALSE)
+```
+
+Using read.table to load some data.
+
+```{r read.table}
+# Load our data using read.table
+# Balloons Data Set
+data_url <- 'https://archive.ics.uci.edu/ml/machine-learning-databases/balloons/adult+stretch.data'
+balloons <- read.table(url(data_url))
+class(balloons)
+head(balloons)
+summary(balloons)
+```
+
+Whoops, what happened?  Look at the [Balloons Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/balloons/adult+stretch.data)   
+
+```{r read.table.ggod}
+balloons <- read.table(url(data_url), sep = ",")
+class(balloons)
+head(balloons)
+summary(balloons)
+```
+
+
+## read.delim
+
+read.delim reads a file in tab delimited table format and creates a data frame from it, with cases corresponding to lines and variables to fields in the file.
+
+```{r, eval = FALSE}
+# set your working directory - normally where you data are
+setwd('path/to/your/data')
+data = read.delim('data.file',
+                  header = TRUE, 
+                  sep = '\t')
+```
+
+Type `?read.delim` to learn what the `header` and `sep` arguments do.
+
+```{r,eval=FALSE}
+?read.delim
+```
+
+
+```{r,eval=FALSE}
+read.delim(file, header = TRUE, sep = "\t", quote = "\"",
+           dec = ".", fill = TRUE, comment.char = "", ...)
+```
+
+## Quiz - load some data with read.delim
+
+Find some data on the [UC Irvine Machine Learning Repository](http://archive.ics.uci.edu/ml/) and load it with read.delim
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+

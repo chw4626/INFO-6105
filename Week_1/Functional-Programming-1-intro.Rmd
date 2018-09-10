@@ -1,0 +1,99 @@
+---
+title: "Introduction to Functional Programming in R"
+author: "Daniel Emaasit"
+date: "February 27, 2016"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+suppressPackageStartupMessages(library(pryr)) # install.packages("pryr")
+```
+
+
+Note: This is from *Functional Programming in R*  [https://github.com/Emaasit/Functional-Programming-in-R](https://github.com/Emaasit/Functional-Programming-in-R) by Daniel Emaasit   
+
+## Introduction
+R is a functional programming language, meaning that it has tools for creating and manipulating functions.
+
+## First class Functions
+R has first class functions. You can do anything with functions that you can do with vectors, like:  
+* Assign them to variables
+* Store them in lists
+* Pass them as arguments
+* Create them inside functions
+* Return them as a result of a function
+
+## Functional Components
+All R functions are made up of 3 components:
+
+* the body
+* the arguments/formals
+* the environment
+
+```{r show_func_components}
+## By printing the function
+f <- function(n, mean, sd){
+  ## Generate n random normal observations with mean = mean and std dev = sd
+  rnorm(n, mean, sd)
+}
+
+print(f) ## if environment is not shown, it means it was created in the Global Env
+body(f)
+formals(f)
+environment(f)
+attributes(f)
+class(f)
+f(10, 1, 1)
+```
+
+### Primitive Functions
+Functions (only found in base package) whose `formals()`, `body()`, and `environment()` are all `NULL`. Like:
+```{r primitive_funcs}
+sum
+formals(sum)
+body(sum)
+environment(sum)
+```
+
+## Scoping
+The set of rules that governs how R looks up the values of a symbol.
+Two types of scopint:
+
+* Lexical Scoping: Looks up symbol values based on how functions were nested when they were created, not how they are nested when they are called
+* Dynamic Scoping: Used in select functions to save typing during interactive analysis
+
+Four basic principles of R's Lexical Scoping
+
+* name masking
+* functions vs variables
+* a fresh start
+```{r fresh_start}
+j <- function() {
+  if (!exists("a")) {
+    a <- 1
+  } else {
+    a <- a + 1
+  }
+  print(a)
+}
+
+j()  
+```
+* dynamic lookup
+
+**Closures**: Functions created by other functions
+
+## Every Operation is a function call
+
+
+
+## Function Arguments
+
+
+## Special Calls
+
+
+## Return Values

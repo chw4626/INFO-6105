@@ -1,0 +1,362 @@
+---
+title: 'Professor Bear :: Regular Expressions in R'
+author: "Nik Bear Brown"
+date: "September 1, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+In this lesson we'll learn regular expressions.
+
+
+# Additional packages needed
+ 
+To run the code in this lesson you may need additional packages.
+
+* If necessary install the followings packages.
+
+`None`   
+
+
+```{r}
+
+```
+
+
+# Data
+
+We will be using a list of bears, some poems, some cartoons, as well as Dr Suess quotes.
+
+
+```{r}
+bears <- c("bear", "Winnie-the-Pooh", "Yogi", "Smokey the Bear", "teddy bear","Baloo","Iorek Byrnison","Rupert the dapper bear","John Lewis bear","Fozzie","Teddy Ruxpin","Aloysius teddy bear","Lots-O'-Huggin' Bear")
+seuss <- c("You have brains in your head.",
+           "You have feet in your shoes.", 
+           "You can steer yourself any direction you choose.",            
+           "You're on your own.", 
+           "And you know what you know.", 
+           "And YOU are the one who'll decide where to go...",            
+           "- Dr. Seuss")
+cummings<-c("(I do not know what it is about you that closes",
+"and opens;only something in me understands",         
+"the voice of your eyes is deeper than all roses)",   
+"nobody,not even the rain,has such small hands",      
+"-- e. e. cummings,",            
+"*somewhere i have never travelled,gladly beyond*")
+title <- c("Steven Universe","Regular Show","The Amazing World of Gumball","Adventure Time","Adventure Time","Clarence","Rick and Morty","Rick and Morty","Simpsons","Simpsons","Bob's Burgers","Bob's Burgers","Steven Universe","Regular Show","The Amazing World of Gumball","Adventure Time","Adventure Time","Clarence","Rick and Morty","Rick and Morty","Simpsons","Bob's Burgers")
+date <-c("Jan 5, 2016","Aug 6, 2015","Aug 19, 2016","Apr 23, 2016","Jan 13, 2016","Mar 24, 2016","Apr 7, 2014","Apr 14, 2014","Sep 25, 2016","May 22, 2016","Apr 3, 2016","Apr 17, 2016","Jan 7, 2016","Jun 23, 2015","Sep 5, 2016","May 22, 2013","May 27, 2013","Mar 25, 2016","Sep 13, 2015","Oct 4, 2015"," May 15, 2016","May 22, 2016")
+episode <- c("Steven's Birthday","The Parkie Awards","The Detective; The Fury Part 1","The Great Birdman; Simon & Marcy","Princess Potluck; James Baxter the Horse","Sneaky Peeky","Close Rick-Counters of the Rick Kind","Ricksy Business","Monty Burns' Fleeing Circus","Orange Is the New Yellow","Stand by Gene","The Hormone-iums","Message Received","Death Kwon Do-Livery","The Re-Run","I Am a Sword; Ghost Fly","Blank Eyed Girl; President Porpoise Is Missing","Clarence Wendle and the Eye of Coogan","Big Trouble in Little Sanchez","The Wedding Squanchers","Simprovised","Glued, Where's My Bob?")
+season <- c(2,7,4,5,5,2,1,1,28,28,6,6,2,6,5,7,7,2,2,2,27,7)
+cartoons <- data.frame(title,episode,date,season)
+bears
+seuss
+cummings
+cartoons
+```
+
+
+# Regular Expressions and Grep
+
+In theoretical computer science and formal language theory, a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) (abbreviated RegEx or RegExp and sometimes called a rational expression) is a sequence of characters that define a search pattern, mainly for use in pattern matching with strings, or string matching, i.e. "find and replace"-like operations. The concept arose in the 1950s, when the American mathematician Stephen Kleene formalized the description of a regular language, and came into common use with the Unix text processing utilities ed, an editor, and [grep](https://en.wikipedia.org/wiki/Grep) (global regular expression print), a filter.
+
+grep is a command-line utility for searching plain-text data sets for lines matching a regular expression. Grep was originally developed for the Unix operating system, but is available today for all Unix-like systems and is built in to languages like python and Perl.
+
+## Basic Regex Syntax  
+
+*Basic regular expression syntax*
+
+```
+.	Normally matches any character except a newline.  
+
+When you match a pattern within parentheses, you can use any of $1, $2, ... later to refer to the previously matched pattern.	
+
++	Matches the preceding pattern element one or more times.  	
+?	Matches the preceding pattern element zero or one times.  	
+*	Matches the preceding pattern element zero or more times.  
+|	Separates alternate possibilities.	 
+
+\w	Matches an alphanumeric character, including "_";  same as [A-Za-z0-9_] in ASCII, and
+[\p{Alphabetic}\p{GC=Mark}\p{GC=Decimal_Number}\p{GC=Connector_Punctuation}]  
+
+\W	Matches a non-alphanumeric character, excluding "_";
+same as [^A-Za-z0-9_] in ASCII, and
+[^\p{Alphabetic}\p{GC=Mark}\p{GC=Decimal_Number}\p{GC=Connector_Punctuation}]  
+
+\s	Matches a whitespace character,
+which in ASCII are tab, line feed, form feed, carriage return, and space;  
+
+\S	Matches anything BUT a whitespace.	 
+
+\d	Matches a digit;
+same as [0-9] in ASCII;  
+
+\D	Matches a non-digit;
+
+^	Matches the beginning of a line or string.	  
+
+$	Matches the end of a line or string.	  
+```
+## R's basic RegEx commands
+
+Let us start with a list of *bears*. Let's use a RegEx to find all items in this list containing 'bear'. The basic RegEx command in R is `grep`, which simply returns the index of the matching elements:
+
+```{r}
+bears
+m=grep(pattern = "bear", bears)
+m
+bears[m]
+```
+
+Note that *teddy bear* was included whereas *Smokey the Bear* was not: the matching pattern can appear anywhere in the text string but is case sensitive.
+
+To make the search ignore cases, simply add the `ignore.case = T` argument.
+
+```{r}
+m=grep("bear", bears, ignore.case = T)
+m
+bears[m]
+```
+
+`grepl` is the same as `grep`, only it outputs a yes/now output for each element:
+
+```{r}
+grepl("bear", bears, ignore.case = T)
+```
+
+Besides *grep* and *grepl* there are a number of functions that take RegEx patterns as arguments.  
+
+```r
+grep(pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE,
+     fixed = FALSE, useBytes = FALSE, invert = FALSE)
+
+grepl(pattern, x, ignore.case = FALSE, perl = FALSE,
+      fixed = FALSE, useBytes = FALSE)
+
+sub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE,
+    fixed = FALSE, useBytes = FALSE)
+
+gsub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE,
+     fixed = FALSE, useBytes = FALSE)
+
+regexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
+        fixed = FALSE, useBytes = FALSE)
+
+gregexpr(pattern, text, ignore.case = FALSE, perl = FALSE,
+         fixed = FALSE, useBytes = FALSE)
+
+RegExec(pattern, text, ignore.case = FALSE, perl = FALSE,
+        fixed = FALSE, useBytes = FALSE)
+```
+
+We often want to "tokenize" strings with regular expressions. For example. we may want to split on white space. 
+
+```{r}
+strsplit(bears, split = "[ ]+") # splits on one or more spaces
+```
+
+## Finding and replacing in R
+
+To search and replace the first instance of a pattern, use `sub`.
+Much more useful is `gsub`, which replaces all instances.
+To replace all instances of *bear* with *Teddy*, use the following:
+
+```{r}
+gsub(pattern = "bear", replacement = "Teddy", bears, ignore.case = T)
+```
+
+What if we want to replace something by keeping what's there and adding something to it. For example, to add a space after a comma, colon or semi-colon.  
+
+```{r}
+gsub("([,:;])", "\\1 ", cummings, perl=T)
+cummings
+```
+
+The above syntax is complicated so let's explain it.  
+
+- We have specified that we want [Perl-esque](http://www.regular-expressions.info/perl.html)
+RegEx with *perl=T*, allowing us to use groups.   
+- The paranthesis indicate the group to match. *([,:;])* reads as a group of comma, colon or semi-colon.  
+- The  brackets refer to a list of characters we want to match *[,:;]* reads as comma or colon or semi-colon.  
+- the `\\1` symbol means "replace this with the value captured in group 1", group 1 is the first pattern surrounded by paranthesis *()*
+
+
+## Regular Expression Examples
+
+```{r}
+letters
+grep("[a-z]", letters)
+grep("[A-Z]", letters)
+grep("[AB]", letters)
+grep("[AB]", letters,ignore.case = TRUE)
+grep("[a-zA-Z]", letters)
+grep("[azAZ]", letters)
+```
+
+```{r}
+seuss
+grep("you", seuss)
+if(length(i <- grep("in", seuss)))
+  cat("'in' appears at least once in\n\t", seuss[i], "\n")
+i # 1 and 2
+seuss[i]
+
+ ## Modify all 'a' or 'b's;  "\" must be escaped 
+s<-gsub("([ab])", "\\1-z\\1_s", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+s<-gsub("([ab])", "-z_s", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+s<-gsub("([ab])", "\\a\\b", "abc vs, ABC  - Oh, A B C. It's easy as, 1 2 3. As simple as, do re mi. a b c, 1 2 3")
+s
+stop.words <- c("The", "for", "are",
+          "to",  "your", 
+         "to", "and", "the", 
+         "is", "your",  "and", "is",
+         "it", "for", "all", "its", "it's")
+
+
+seuss.re<-regexpr("[ ]+",seuss)
+seuss.re
+seuss.re<-gregexpr("[ ]+",seuss)
+seuss.re
+
+
+## trim trailing white space
+str <- " You have brains in your head      "
+str
+str<-sub("[ ]+$", "", str)  ## trailing spaces only
+str
+str<-sub("^[ ]+", "", str)  ## leading spaces only
+str
+sub("[[:space:]]+$", "", str) ## white space, POSIX-style
+sub("\\s+$", "", str, perl = TRUE) ## Perl-style white space
+
+## capitalizing
+txt <- "You have brains in your head"
+gsub("(\\w)(\\w*)", "\\U\\1\\L\\2", txt, perl=TRUE)
+gsub("\\b(\\w)",    "\\U\\1",       txt, perl=TRUE)
+
+txt2 <- "You have feet in your shoes."
+gsub("(\\w)(\\w*)(\\w)", "\\U\\1\\E\\2\\U\\3", txt2, perl=TRUE)
+sub("(\\w)(\\w*)(\\w)", "\\U\\1\\E\\2\\U\\3", txt2, perl=TRUE)
+
+## Decompose a URL into its components.
+url <- "http://nikbearbrown/machine/learning/"
+m <- regexec("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)", url)
+m
+regmatches(url, m)
+## parts of a URL:
+URL_parts <- function(u) {
+  m <- regexec("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)", u)
+  parts <- do.call(rbind,
+                   lapply(regmatches(u, m), `[`, c(3L, 4L, 6L, 7L)))
+  colnames(parts) <- c("protocol","host","port","path")
+  parts
+}
+URL_parts(url)
+
+# Spilt text
+seuss
+seuss[1]
+sp<-strsplit(seuss[1], "a") # "You have brains in your head."
+s<-"You    have   brains  in  your head. "
+sp<-strsplit(seuss[1], " ") 
+sp
+sp<-strsplit(s," ") 
+sp
+sp<-strsplit(s,"[ ]+") 
+sp
+sp<-strsplit(s,"[ ]+",perl = TRUE) 
+sp
+```
+
+## Cartoon data set
+
+Episodes from 2015
+
+```{r cartoon}
+cartoons
+m<-grep("2015",cartoons$date) # Episodes from 2015
+m
+cartoons[m,]
+```
+
+*Episodes after 2010*  
+
+We could try "201" as pattern but might get some false postives. What we want is"201" followed by one digit:
+
+```{r example2}
+m<-grep("201.",cartoons$date) # "201" followed by one digit
+m
+cartoons[m,]
+```
+
+The "." acts as a wild card that matches any single character. Note that [0-9] stands for any digit (so does \d). Hence "20[0-9][0-9]" and "20\d\d" would work better (more restrictive) for all tests later than 2000. 
+
+*Episodes from 2013 or 2014*  
+
+We could try "201" as pattern but might get some false postives. What we want is "201" followed by one digit of 3 or 4.  
+
+
+```{r example34}
+m<-grep("201[34]",cartoons$date) # "201" followed by one digit of 3 or 4
+m
+cartoons[m,]
+```
+
+*Find all episodes in May 2013*
+
+The dates are in this form "May 22, 2013". The RegEx _"May[ ]+[0-9]+[,]*[ ]+2013"_ reads as  May then one or more spaces *[ ]+* then one or more digits *[0-9]+* the zero or more commas *[,]** then one or more spaces *[ ]+* then 2013.  
+```{r exampleMay2103}
+m<-grep("May[ ]+[0-9]+[,]*[ ]+2013",cartoons$date) # Find all episodes in May 2013
+m
+cartoons[m,]
+```
+
+
+*Some simple RegEx examples*   
+
+```
+ {^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$}  # Floating Point Number
+
+{^[A-Za-z]+$}   # Only letters.
+
+ {^[[:alpha?:]]+$} # Only letters, the Unicode way.
+
+ {(.)\1{3}} $string {\1} result # Back References 
+
+(\[0-9]{1,3})\.(\[0-9]{1,3})\.(\[0-9]{1,3})\.(\[0-9]{1,3}) # IP Numbers 
+```
+
+## Regular expression testing websites
+
+There are a number of regular expression testing websites. It a good way to check if your _pattern_ does what you think it does. Many also generate an english summary of what a regular expression does so they can be used to understand regular expressions that one might find on the web.
+
+*Regular expression testing websites*  
+* [regex101.com](https://regex101.com/)   
+* [RegExpal.com](http://RegExpal.com/)   
+* [regextester.com](http://www.regextester.com/)   
+* [regexr.com](http://regexr.com/)   
+  
+
+## Resources   
+
+* [regular-expressions.info](http://www.regular-expressions.info/)   
+* [Tech Stuff - Regular Expressions - A Gentle User Guide and Tutorial](http://www.zytrax.com/tech/web/regex.htm)    
+* [Learning to Use Regular Expressions - Gnosis.cx](http://gnosis.cx/publish/programming/regular_expressions.html)    
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

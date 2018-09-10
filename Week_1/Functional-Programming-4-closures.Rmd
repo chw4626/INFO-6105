@@ -1,0 +1,18 @@
+---
+title: "Closures in R"
+author: "Daniel Emaasit"
+date: "February 27, 2016"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+Note: This is from *Functional Programming in R*  [https://github.com/Emaasit/Functional-Programming-in-R](https://github.com/Emaasit/Functional-Programming-in-R) by Daniel Emaasit   
+
+
+## Closures
+Are functions returned by another function. (The oppposite is called Functionals)  
