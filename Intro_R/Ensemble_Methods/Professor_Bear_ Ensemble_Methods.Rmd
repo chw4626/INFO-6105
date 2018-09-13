@@ -1,0 +1,247 @@
+---
+title: "Ensemble Methods"
+author: "Nik Bear Brown"
+output: html_document
+---
+
+In this lesson we will disucss ensemble learning theory. There are no data sets, or libraires to be installed.
+
+# Ensemble methods  
+
+In statistics and machine learning, [ensemble methods](https://en.wikipedia.org/wiki/Ensemble_learning) use multiple learning algorithms to obtain better predictive performance than could be obtained from any of the constituent learning algorithms.
+
+Ensemble methods groups a collection of base learners, with each learning according to its arget function. The ensemble then combines their outputs for a final predication. The basic idea is "two heads are better than one.
+" (assuming those heads make independent decsisons). This is sometimes called “meta-learning”.
+
+![Ensemble learning mixes multiple approaches to obtain better predictive performance.](http://nikbearbrown.com/YouTube/MachineLearning/M09/Emsemble_Learning.png)    
+*Ensemble Learning*
+
+The basic issue with ensemble learning is:    
+* How can you choose independent learners?    
+* How can you combine learners?    
+
+# Ensemble theory
+
+Ensemble learning build many models and combines them. ensemble methods can be shown both theoretically and empirically to outperform single predictors on a wide range of tasks.
+
+*When does this work?*
+
+* Let p be the probability that a classifier makes an error  
+* Assume that classifier errors are independent    
+* The probability that k of the n classifiers make an error    
+
+$$
+\binom n k  p^k(1-p)^{n-k}
+$$ 
+ 
+for k = 0, 1, 2, ..., n, where
+$$
+\binom n k =\frac{n!}{k!(n-k)!}
+$$
+is the binomial coefficient, hence the name of the distribution.
+
+Therefore the probability that a majority vote classifier is in error is:   
+
+$$
+ \sum_{k>n/2}^{n} \binom n k  p^k(1-p)^{n-k}
+$$
+
+
+## Majority Vote Model
+
+In the majority vote model the ensemble chooses the class predicted by more than $n/2$ the $n$ classifiers. If no agreement then return an error.
+
+
+## When is an Ensemble Better than a Single Learner?
+
+*“No Free Lunch” Theorem*  
+
+No single algorithm wins all the time! By combing multiple independent decisions, each of which is at least more accurate than random guessing, random errors cancel each other out and correct decisions are reinforced. Empirically, ensembles tend to yield better results when there is a significant diversity among the models. 
+
+*Bias Problem*   
+
+The hypothesis space made available by a particular classification method does not  include the true hypothesis. The bias is error from erroneous assumptions in the learning algorithm.   
+
+*Variance Problem*  
+
+The hypothesis space is “too large” for the amount of training data – thus selected hypothesis may be inaccurate on unseen data. The variance is error from sensitivity to small fluctuations in the training set. High variance can cause overfitting: modeling the random noise in the training data, rather than the intended outputs.   
+
+Bias and variance usually work in opposition to one other: attempts to reduce the bias component will cause an increase in variance, and vice versa. Many ensemble methods, therefore, seek to promote diversity among the models they combine. Ensembles methods tend to decrease error by decreasing the variance in the results due to unstable learners, algorithms  whose output can change dramatically when the training data is slightly changed. However, these random errors may not cancel and be further reinfornced if the learners all have the same bias.
+
+## Condorcet Jury Theorem
+
+[Condorcet's jury theorem](https://en.wikipedia.org/wiki/Condorcet%27s_jury_theorem) is a political science theorem about the relative probability of a given group of individuals arriving at a correct decision. The theorem was first expressed by the Marquis de Condorcet in his 1785 work Essay on the Application of Analysis to the Probability of Majority Decisions.
+
+If each voter has an independent probability p of voting for the correct decision then the critical p for which majority voting works is a probability greater than or less than 1/2:   
+
+* If p is greater than 1/2 (each voter is more likely to vote correctly), then adding more voters increases the probability that the majority decision is correct. In the limit, the probability that the majority votes correctly approaches 1 as the number of voters increases.   
+
+* On the other hand, if p is less than 1/2 (each voter is more likely to vote incorrectly), then adding more voters makes things worse: the optimal jury consists of a single voter.   
+
+* It is critical that voter has an independent probability.   
+
+The probability of a correct majority decision P(n,p) (p close to 1/2), the gain by having n voters grows proportionally to \sqrt{n}.
+
+$$  
+ P(n,p) = 1/2 + c_1 (p-1/2) + c_3 (p-1/2)^3 + O( (p-1/2)^5 ) 
+$$   
+where
+$$  
+ c_1 = {n  \choose { \lfloor n/2 \rfloor}} \frac{ \lfloor n/2 \rfloor +1} { 4^{\lfloor n/2 \rfloor}} = \sqrt{ \frac{2n+1}{\pi}} (1 + \frac{1}{16n^2} + O(n^{-3}) ) 
+$$  
+
+## Wisdom of Crowds 
+
+The "Wisdom of Crowds" refers to situations in which human ensembles are demonstrably better than individual experts. This has often been observed in situations like:
+
+* How many jelly beans are in the jar?   
+* Who Wants to be a Millionaire:  “Ask the audience”
+* Accurately guessing the weight of an ox
+
+Many examples are given in [James Surowiecki's](https://en.wikipedia.org/wiki/James_Surowiecki) book The [Wisdom of Crowds: Why the Many Are Smarter Than the Few and How Collective Wisdom Shapes Business, Economies, Societies and Nations](https://en.wikipedia.org/wiki/The_Wisdom_of_Crowds), published in 2004.
+
+Surowiecki notes that Not all crowds (groups) are wise.  Charles Mackay's [Extraordinary Popular Delusions and the Madness of Crowds](https://en.wikipedia.org/wiki/Extraordinary_Popular_Delusions_and_the_Madness_of_Crowds), published in 1841, is a history of popular crowd delusions. Rather he states four key criteria separate wise crowds from irrational ones:
+
+* Diversity of opinion - Each person should have private information even if it's just an eccentric interpretation of the known facts.  
+* Independence - People's opinions aren't determined by the opinions of those around them.  
+* Decentralization - People are able to specialize and draw on local knowledge.   
+* Aggregation	Some mechanism exists for turning private judgments into a collective decision. 
+
+For ensemble learners certainly the following are critical 
+
+* Independence
+* Aggregation
+
+and the following certainly helps
+
+* Diversity of learners
+
+It's not so clear that ensemble learners should specialize and draw on local knowledge; but the effect is related to diversity.    
+
+
+# Common types of ensembles
+
+## Bootstrap aggregating (bagging)
+
+Create ensembles by [“bootstrap aggregation”](https://en.wikipedia.org/wiki/Bootstrap_aggregating), i.e., repeatedly randomly re-sampling training data. Not that bagging uses the same learner so bias related to the method isn't addressed by this approach. 
+
+Bootstrap: draw n items from X with replacement
+
+Bootstrap aggregating: combines random learners (often with voting, averaging or median) to create a predictor lesss efected by noise. Unstable and/or noisy algorithms often profit from bagging.
+
+Bagging's usefulness depends on the stability of the base classifiers.  If small changes in the sample cause small changes in the base-level classifier, then the ensemble will not be much better than the base classifiers. It reduces variance and helps to avoid overfitting. It is often applied to decision tree methods (random forests) and nearest neighbor classifiers, but it can be used with any type of method.  
+
+## Boosting
+
+Boosting involves incrementally building an ensemble by training each new model instance to emphasize the training instances that previous models mis-classified. In these sense it "learns." Unlike bagging, weights may change at the end of boosting round making certain learners more important than others. In some cases, boosting has been shown to yield better accuracy than bagging, but it also tends tp propgate bias from the overweighting winning predictor and is more likely to over-fit the training data. By far, the most common implementation of Boosting is Adaboost.
+
+*Summary of Boosting and Bagging*
+
+* Called “homogenous ensembles” becuase there is a single learner 
+* Bagging: Resample training data
+* Boosting: Reweight training data
+
+## AdaBoost
+
+[AdaBoost](https://en.wikipedia.org/wiki/AdaBoost), short for "Adaptive Boosting." AdaBoost refers to a particular method of training a boosted classifier. A boost classifier is a classifier in the form
+
+$$
+F_T(x) = \sum_{t=1}^T f_t(x)\,\!
+$$
+
+where each $f_t$ is a weak learner that takes an object $x$ as input and returns a real valued result indicating the class of the object. 
+
+Each weak learner produces an output, hypothesis $h(x_i)$, for each sample in the training set. At each iteration t, a weak learner is selected and assigned a coefficient $\alpha_t$ such that the sum training error $E_t$ of the resulting t-stage boost classifier training error is minimized.    
+
+$E_t = \sum_i E[F_{t-1}(x_i) + \alpha_t h(x_i)]$
+Here $F_{t-1}(x)$ is the boosted classifier that has been built up to the previous stage of training, $E(F)$ is some error function and $f_t(x) = \alpha_t h(x)$ is the weak learner that is being considered for addition to the final classifier.
+
+AdaBoost can be thought of as a form of gradient descent along the error gradient.   
+
+
+## Bayesian parameter averaging
+
+Bayesian classifiers are determined by the parameters of the models. Bayesian parameter averagingis an ensemble of all the hypotheses in the hypothesis space. The idea is that the bias of the modelds does not change, but variance decreases by the number of independent models.   
+
+
+## Bucket of models
+
+A "bucket of models" is an ensemble in which a model selection algorithm is used to choose the best model for each problem. When tested with only one problem, a bucket of models can produce no better results than the best model in the set, but when evaluated across many problems, it will typically produce much better results, on average, than any model in the set.
+
+```
+For each model m in the bucket:
+  Do c times: (where 'c' is some constant)
+    Randomly divide the training dataset into two datasets: A, and B.
+    Train m with A
+    Test m with B
+Select the model that obtains the highest average score
+```
+This idea can be summed up as, "try them all with the training set, and pick the one that works best".
+
+
+## Stacking
+
+Stacking (sometimes called stacked generalization) involves training a learning algorithm to combine the predictions of several other learning algorithms.
+
+Unlike a bucket of models it isn't a "winner take all" approach. Unlike “homogenous ensembles” like bagging and boosting here we are creating “heterogenous ensembles” and various preictors.     
+
+## Random Forests
+
+[Random forests](https://en.wikipedia.org/wiki/Random_forest) involve bagging multitude of decision trees at training time and outputting the class that is the mode of the classes (classification) or mean prediction (regression) of the individual trees.  
+
+```
+For i = 1 to T,
+  Take a bootstrap sample (bag)
+  Grow a random decision tree  T_i
+  At each node choose a feature from one of n features (n < total number of features)
+  Grow a full tree (do not prune)
+
+Final classification is done by majority vote across the T random trees.
+```
+
+# Developing Ensemble Models?
+
+The main challenge is not to obtain highly accurate base models, very weak predictors with an accuracy of greater than 50% can be used, but rather to obtain base models which make different kinds of errors.   
+
+When one resamples or rewights training data, as one does with bagging amd boosting it helps with noisy data but not the predictor itself.
+
+To generate “heterogenous ensembles” independence between the base classifiers needs to be assessed. Independence between classifiers is often assed by measuring the degree of overlap in misclassifying training examples. Less overlap means more independence between models. The key of designing ensembles is diversity and not necessarily high accuracy of the base classifiers: Members of the ensemble should vary in the examples they misclassify. 
+
+# Assingment
+
+Ensemble Methods:
+
+* One key problem of ensemble methods is to obtain diverse ensembles; what characterizes a “diverse ensemble”?   
+
+* What is the key idea of boosting? How does the boosting differ from bagging? Does the boosting approach encourage the creating of diverse ensemble?
+
+* Some ensemble algorithms restart if the accuracy of classifiers drops below 50%. Why? 
+.  
+
+* Given a large number of n indepenent voters (say millions), and a probability p that they make the "correct" vote, at what probability would you trust the decision of  n indepenent voters. When wouldn't you trust  n voters decisions even at large n,    
+  
+# Resources   
+
+* [An Intro to Ensemble Learning in R](http://www.r-bloggers.com/an-intro-to-ensemble-learning-in-r/) via @rbloggers   
+
+* [Ensemble Packages in R](http://blog.revolutionanalytics.com/2014/04/ensemble-packages-in-r.html)  
+
+* [Intro to Practical Ensemble Learning](http://www.stat.berkeley.edu/~ledell/docs/dlab_ensembles.pdf)
+
+* [r - Buiding Ensemble model - Cross Validated](http://stats.stackexchange.com/questions/143315/buiding-ensemble-model)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

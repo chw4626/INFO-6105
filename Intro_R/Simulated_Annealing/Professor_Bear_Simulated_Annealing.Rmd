@@ -1,0 +1,187 @@
+---
+title: "Simulated Annealing"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the theory behind using simulated annealing as an optimization and search technique. We'll then use simulated annealing to search for a solution to the famous Travelling Salesman Problem in R.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`   
+`install.packages("stats");`   
+
+```{r}
+require(ggplot2)
+require(stats)
+```
+
+
+# Data
+
+We will be using the R stats library mapping of distances between European cities to generate out data.
+
+# Simulated Annealing
+
+A Simulated Annealing (SA) is a  probabilistic search heuristic that mimics the process of cooling in thermodynamic systems. This heuristic is often used to generate useful solutions to optimization and search problems.  The method is an adaptation of the [Metropolis–Hastings algorithm](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm), a Monte Carlo method to generate sample states of a thermodynamic system, invented by M.N. Rosenbluth and published in a paper by N. Metropolis et al. in 1953.
+
+Basically simulated annealing perturbs the current solution  and then checks to see whether the new solution is good or not. If its an improvement it will accept it and if the new solution is worse it may accept it with a probability inversely proportional to how much worse the new solution changes the current one. Compared to pure gradient descent the main difference is that SA allows "uphill" steps. Simulated annealing also differs from gradient descent in that a move is selected at random.
+
+
+![gradient descent](http://nikbearbrown.com/YouTube/MachineLearning/M07/Gradient_Descent.png)
+*Gradient Descent*    
+
+## Metropolis–Hastings algorithm
+
+[Metropolis algorithm](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm) (symmetric proposal distribution)
+Let f(x) be a function that is proportional to the desired probability distribution P(x) 
+
+
+
+This algorithm proceeds by randomly attempting to move about the sample space, sometimes accepting the moves and sometimes remaining in place.
+
+
+Perturb (randomly) the current state to a new state. 
+$\Delta E$ is the difference in energy between current and new state.   
+If $\Delta E < 0$ (new state is lower), accept new state as current state
+If  $\Delta E > 0$  accept new state with probability inversely proportional to the increase in system energy. Traditionally the change in [Gibbs free energy](https://en.wikipedia.org/wiki/Gibbs_free_energy) is used for thermodynamic free energy systems.
+
+This can be run for a fixed number of iterations or if the overall system energy can measured then it can be run until the overall system energy settles.		
+
+
+## Simulated Annealing Pseudocode 
+
+Simulated Annealing uses the Metropolis–Hastings algorithm with a temperature parameter $T$ that effects the acceptance probability of an "uphill" transition. At higher"temperatures" accpeting "uphill" transitions is more probable. The algorithm starts initially with $T$ set to a high value , and then it is decreased at each step following some annealing schedule—which is often specified by the user, but must end with $T=0$. At $T=0$ there is no chance of accpeting "uphill" transitions and so it becomes gradient descent.  
+
+At a fixed temperature T:  
+Perturb (randomly) the current state to a new state. 
+$\Delta E$ is the difference in energy between current and new state.  
+If $\Delta E < 0$ (new state is lower), accept new state as current state
+If  $\Delta E > 0$  accept new state with probability inversely proportional to the increase in system energy as a function of T.
+
+Eventually the systems evolves into thermal equilibrium at temperature T ; then the formula mentioned before holds When equilibrium is reached, temperature T can be lowered and the process can be repeated.
+
+
+# Travelling Salesman Problem
+
+The travelling salesman problem (TSP) asks the following question: Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city exactly once and returns to the origin city? It is an NP-hard problem in combinatorial optimization, important in operations research and theoretical computer science.
+
+![Travelling Salesman Problem](http://nikbearbrown.com/YouTube/MachineLearning/M07/TSP.png)
+*Travelling Salesman Problem*    
+
+# Simulated Annealing to solve the Travelling Salesman Problem in R
+
+Simulated Annealing to solve the Travelling Salesman Problem in R
+
+```{r}
+CityDistMatx <- as.matrix(eurodist)
+CityDistMatx
+# Distance function
+distance <- function(sq) 
+  {  # Target function
+  sq2 <- embed(sq, 2)
+  return(as.numeric(sum(CityDistMatx[cbind(sq2[,2],sq2[,1])])))
+}
+
+# Generate new candidates
+GenSeq <- function(sq) {  # Generate new candidate sequence
+  idx <- seq(2, NROW(CityDistMatx)-1, by=1)
+  ChangePoints <- sample(idx, size=2, replace=FALSE)
+  tmp <- sq[ChangePoints[1]]
+  sq[ChangePoints[1]] <- sq[ChangePoints[2]]
+  sq[ChangePoints[2]] <- tmp
+  return(as.numeric(sq))
+}
+
+cities<-labels(eurodist)
+cities
+
+initial.tour <- c(1,2:NROW(CityDistMatx),1)  
+# Initial sequence
+initial.tour
+initial.d<-distance(initial.tour)
+initial.d
+for(i in 1:length(initial.tour))
+{
+  print(cities[initial.tour[i]])  
+}  
+set.seed(333) # chosen to get a good soln relatively quickly
+
+#  box-constrained optimization and simulated annealing
+# method = "SANN" performs simulated annealing
+# Method "SANN" is by default a variant of simulated annealing given in Belisle (1992)
+res <- optim(initial.tour, distance, GenSeq, method = "SANN",
+             control = list(maxit = 30000, temp = 2000, trace = TRUE,
+                            REPORT = 500))
+res  # Near optimum distance around 12842
+final.tour<-res$par
+final.tour
+final.d<-distance(final.tour)
+final.d
+initial.d
+final.d/initial.d
+
+
+cities.xy <- cmdscale(eurodist)
+cities.xy
+for(i in 1:length(final.tour))
+{
+  print(cities[final.tour[i]])  
+}  
+rx <- range(x <- cities.xy[,1])
+ry <- range(y <- -cities.xy[,2])
+rx
+ry
+x
+y
+initial.tour
+## remove last element to draw arrows from point to point
+s <-head(initial.tour, -1)
+s
+plot(x, y, type="n", asp=1, xlab="", ylab="", main="initial solution of traveling salesman problem")
+arrows(x[s], y[s], x[s+1], y[s+1], col="green")
+text(x, y, labels(cities), cex=0.8)
+plot(x, y, type="n", asp=1, xlab="", ylab="", main="initial solution of traveling salesman problem")
+arrows(x[s], y[s], x[s+1], y[s+1], col="green")
+text(x, y, labels(cities), cex=0.8)
+text(x, y, labels(eurodist), cex=0.8)
+final.tour
+## draw lines from point to point
+s <-head(final.tour, -1)
+s
+df = data.frame(x[s],y[s])
+df
+plot(x, y, type="n", asp=1, xlab="", ylab="", main="optimized simulated annealing traveling salesman problem")
+lines(df$x, df$y, col="red")
+text(x, y, labels(cities), cex=0.8)
+plot(x, y, type="n", asp=1, xlab="", ylab="", main="optimized simulated annealing traveling salesman problem")
+lines(df$x, df$y, col="red")
+text(x, y, labels(cities), cex=0.8)
+text(x, y, labels(eurodist), cex=0.8)
+```
+
+
+ 
+# Resources   
+
+
+* [The Traveling Salesman with Simulated Annealing, R, and Shiny](http://toddwschneider.com/posts/traveling-salesman-with-simulated-annealing-r-and-shiny/)
+
+* [Simulated Annealing Feature Selection](http://www.r-bloggers.com/simulated-annealing-feature-selection/)
+
+
+
+
+```
+
+
+
+
+

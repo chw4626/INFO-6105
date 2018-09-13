@@ -1,0 +1,300 @@
+---
+title: "Self-Organizing Maps (SOM)"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the theory behind using Linear Self-Organizing Maps (SOM) as a clustering and mapping technique. We'll then use Self-Organizing Maps to cluster the UCI wine dataset in R.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`   
+`install.packages("kohonen");`   
+
+```{r}
+require(ggplot2)
+require(kohonen)
+```
+
+
+# Data
+
+We will be using the [UCI Machine Learning Repository: Wine Data Set](https://archive.ics.uci.edu/ml/datasets/Wine).  These data are the results of a chemical analysis of wines grown in the same region in Italy but derived from three different cultivars. The analysis determined the quantities of 13 constituents found in each of the three types of wines.  
+
+The attributes are:  
+1) Alcohol  
+2) Malic acid   
+3) Ash   
+4) Alcalinity of ash   
+5) Magnesium   
+6) Total phenols   
+7) Flavanoids   
+8) Nonflavanoid phenols   
+9) Proanthocyanins   
+10) Color intensity   
+11) Hue   
+12) OD280/OD315 of diluted wines   
+13) Proline   
+
+Feel free to tweet questions to [@NikBearBrown](https://twitter.com/NikBearBrown)  
+
+```{r data}
+# Load our data
+data(wines)
+head(wines)
+```
+
+
+# Self-Organizing Maps (SOM)
+
+A [self-organizing map (SOM)](https://en.wikipedia.org/wiki/Self-organizing_map) or self-organizing feature map (SOFM) is an artificial neural network (ANN) that is trained using unsupervised learning to produce a low-dimensional (typically two-dimensional), discretized representation of the input space of the training samples, called a map. This makes SOMs useful for visualizing low-dimensional views of high-dimensional data. In this sense, SOMs are similar to multidimensional scaling. Self-organizing maps with a small number of nodes behave in a way that is similar to K-means, larger self-organizing maps rearrange data in a way that is fundamentally topological in character.
+
+![SOM Algorithm](http://nikbearbrown.com/YouTube/MachineLearning/M07/SOM_Algorithm.png)  
+*SOM Algorithm*  
+
+![SOM Training](http://nikbearbrown.com/YouTube/MachineLearning/M07/Som_Training.png)  
+*SOM Training*  
+
+## SOM neighborhood topology
+
+
+![Square Grid Lattice SOM](http://nikbearbrown.com/YouTube/MachineLearning/M07/Square_Grid_Lattice_SOM.png)  
+*Square Grid Lattice SOM]* 
+
+![Hexoganal Honeycomb Lattice SOM](http://nikbearbrown.com/YouTube/MachineLearning/M07/Hexoganal_Honeycomb_Lattice_SOM.png)  
+*Hexoganal Honeycomb Lattice SOM]*  
+
+The grids have an $x$ dimension and $y$ dimension. The topology of the grid is rectangular or hexagonal. 
+
+## SOM neighborhood functions
+
+While the neighborhood function $\theta(u, v, s)$ usually depends on the lattice distance between the BMU (neuron u) and neuron v. Other functions such as a [Gaussian function](https://en.wikipedia.org/wiki/Gaussian_function) or a radius distance centered around the neuron are also common choices.   
+
+## SOM Algorithm  
+
+
+A. Randomize the map's nodes' weight vectors. The weights of the neurons are initialized either to small random values or sampled evenly from the subspace spanned by the two largest principal component eigenvectors.   
+
+B.  Grab an input vector $\mathbf{D(t)}$. $t$ is the index of the target input data vector in the input data set $\mathbf{D}$ Each data point, $\mathbf{D(t)}$, needs to be mapped to a "neuron."
+
+C.  Traverse each node in the map. Use the Euclidean distance or another similarity metric between the input vector $\mathbf{D(t)}$ and the map's node's weight vector. The node that produces the smallest distance (i.e. the best matching unit, BMU) is associated with that neuron.
+
+D. Update the nodes in the neighborhood of the BMU (including the BMU itself) by pulling them closer to the input vector. This is analogous to updating the new means to be the centroids of the observations in the new clusters the means in [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). That is,
+
+$$
+Wv(s + 1) = Wv(s) + \theta(u, v, s) 	\alpha(s)(D(t) - Wv(s))
+$$
+
+Where
+
+* $s$ is the current iteration
+* $\lambda$ is the iteration limit. Sometimes this is called the maximum number of 'epochs'
+* $v$ is the index of the node in the map
+* $\mathbf{W_v}$ is the current weight vector of node v
+* $u$ is the index of the best matching unit (BMU) in the map
+* $\Theta (u, v, s)$ is a restraint due to distance from BMU, usually called the neighborhood function,
+* $\alpha (s)$ is a learning restraint due to iteration progress. Sometimes this is called the learning rate.
+
+E Increase $s$ and repeat from step B while $s < \lambda$
+
+Note that the neighborhood function $\Theta (u, v, s)$  depends on the lattice distance between the BMU (neuron u) and neuron v. In the simplest form it is 1 for all neurons close enough to BMU and 0 for others, but a Gaussian function is a common choice, too. Regardless of the functional form, the neighborhood function shrinks with time.  
+
+A variant algorithm:
+
+A. Randomize the map's nodes' weight vectors  
+B. Traverse each input vector in the input data set   
+C. Traverse each node in the map    
+D.  Use the Euclidean distance formula to find the similarity between the input vector and the map's node's weight vector
+E.  Track the node that produces the smallest distance (this node is the best matching unit, BMU)
+Update the nodes in the neighborhood of the BMU (including the BMU itself) by pulling them closer to the input vector
+$Wv(s + 1) = Wv(s) + \theta(u, v, s) \alpha(s)(D(t) - Wv(s))$
+F. Increase $s$ and repeat from step B while $s < \lambda$
+
+
+The kind of training is called *[competitive learning](https://en.wikipedia.org/wiki/Competitive_learning)* n which nodes compete for the right to respond to a subset of the input data.
+
+
+## SOM Usage
+
+Using Self-Organising Maps are typcially done as follows:
+
+Select the size and type of the map. The shape can be hexagonal or square. Note that hexagonal grid has six immediate neighbors whereas a square usually has four. This topology determines the number of "neurons."
+
+The algorithm then 
+
+A. Initializes all node weight vectors.  
+B. Chooses a random data point from the training data to present to the SOM.  
+C. Finds the "Best Matching Unit" (BMU) in the map.
+Determine the nodes within the "neighborhood" of the BMU.  
+D. The size of the neighborhood decreases with each iteration.  
+E. Adjust weights of nodes (neurons) in the BMU neighborhood  towards a chosen datapoint.
+- The learning rate decreases with each iteration.  
+- The magnitude of the adjustment is proportional to the proximity of the node to the BMU.  
+
+
+Repeat Steps B-E for a fixed number of iterations or until convergence.
+
+## SOM Pros and Cons  
+
+Pros:
+
+* Intuitive method.  
+* Simple algorithm.    
+* New data points can be mapped to trained model for predictive purposes.   
+
+Cons:
+
+* Requires clean, numeric data.  
+
+
+# SOM Visualization  
+
+The Self-Organizing Maps projects high-dimensional data onto a two-dimensional map. The projection preserves the topology of the data so that similar data items will be mapped to nearby locations on the map. As such one of its great strengths is high-dimensional data visualization, akin to [multidimensional scaling (MDS)](https://en.wikipedia.org/wiki/Multidimensional_scaling).    
+
+## SOM Cluster Maps
+
+
+![SOM Clusters](http://nikbearbrown.com/YouTube/MachineLearning/M07/SOM_Clusters.png)  
+*SOM Clusters*   
+- from [Self-Organising Maps for Customer Segmentation using R](http://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/) via @rbloggers
+
+
+![SOM Clusters with Labels](http://nikbearbrown.com/YouTube/MachineLearning/M07/SOM_Clusters_Lablels.png)  
+*SOM Clusters with Labels*   
+- from [Self-Organising Maps for Customer Segmentation using R](http://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/) via @rbloggers
+
+![SOM Clusters on Map](http://nikbearbrown.com/YouTube/MachineLearning/M07/SOM_Clusters_on_Map.png)  
+*SOM Clusters on Map*    
+- from [Self-Organising Maps for Customer Segmentation using R](http://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/) via @rbloggers
+## SOM Heatmaps
+
+A [heat map](https://en.wikipedia.org/wiki/Heat_map) is a graphical representation of data where a gradient of values are represented as colors.
+
+![SOM Heatmap](http://nikbearbrown.com/YouTube/MachineLearning/M07/SOM_Heatmap.png)  
+*SOM Heatmap*   
+- from [Self-Organising Maps for Customer Segmentation using R](http://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/) via @rbloggers
+
+# SOMs in R
+
+Clustering the data with a 5x5 hexagonal grid.
+
+
+```{r}
+training <- sample(nrow(wines), 120)
+Xtraining <- scale(wines[training, ])
+# 5, 5, "hexagonal"
+fit.som <- som(Xtraining, somgrid(5, 5, "hexagonal"))
+map.som <- map(fit.som,
+               scale(wines[-training, ],
+                     center=attr(Xtraining, "scaled:center"),
+                     scale=attr(Xtraining, "scaled:scale")))
+fit.som
+map.som
+```
+
+
+## SOM Visualization in R   
+
+### Code Plot  
+
+ The codebook vectors are visualized in a segments plot, which is the default plotting type. The the code plot shows each cluster and the node weight vectors or "codes" associated with each node. That is, the fan chart in the center of the clusters reveals the characteristics that define how much of each attribute were clustered into each particular cluster. High alcohol levels, for example, are associated with wine
+samples projected in the bottom right corner of the map, while color intensity is largest in the bottom left corner.  
+
+
+```{r}
+plot(fit.som,"codes")
+```
+
+
+### Training Plot ("changes")
+
+This shows a hundred iterations. This shows the mean distance to the closest codebook vector during training. Training decreases the mean distance with iterations and typically plateaus at around 40 iterations.   
+
+```{r}
+plot(fit.som,"changes")
+```
+
+### Count Plot ("counts")
+
+This tells you how many items are in each of the clusters. The count plot can be used as a quality check. Ideally you want a uniform distribution. That is, you would like all the data not to be bunched up in a few nodes (i.e. neurons)
+
+
+```{r}
+plot(fit.som,"counts")
+```
+
+### Distance Neighbour Plot ("dist.neighbours")  
+
+This is sometimes called the "U-Matrix." The U-Matrix value of a particular node is the average distance between the node's weight vector and that of its closest neighbors. Areas of low neighbor distance indicate groups of nodes that are similar and the further apart nodes indicate natural "borders" in the map. That is, units near a class boundary can be expected to have higher average distances to their neighbors.  
+
+```{r}
+plot(fit.som,"dist.neighbours")
+```
+
+### Quality Plot ("quality")
+
+This shows the mean distance of objects mapped to a unit to the codebook vector of that unit. The smaller the distances, the better the objects are represented by the codebook vectors.  
+
+```{r}
+plot(fit.som,"quality")
+```
+
+
+## Clustering the data with a 3x3 rectangular grid.
+
+Clustering the data with a 3x3 rectangular grid.
+
+```{r}
+fit.som <- som(Xtraining, somgrid(3, 3, "rectangular"))
+map.som <- map(fit.som,
+               scale(wines[-training, ],
+                     center=attr(Xtraining, "scaled:center"),
+                     scale=attr(Xtraining, "scaled:scale")))
+fit.som
+map.som
+```
+
+## SOM visualization 3x3 rectangular grid
+
+Plotting the 3x3 rectangular grid fit.  
+
+```{r}
+plot(fit.som)
+plot(fit.som,"codes")
+plot(fit.som,"changes")
+plot(fit.som,"counts")
+plot(fit.som,"dist.neighbours")
+plot(fit.som,"quality")
+```
+
+
+# Resources   
+
+* [Self-Organising Maps for Customer Segmentation using R](http://www.r-bloggers.com/self-organising-maps-for-customer-segmentation-using-r/) via @rbloggers 
+
+* [Self-Organizing Maps (SOM)](https://en.wikibooks.org/wiki/Data_Mining_Algorithms_In_R/Clustering/Self-Organizing_Maps_(SOM))
+
+* [On the creation of an extended Self Organizing Map program in R](http://www.visualcinnamon.com/2013/07/on-creation-of-extended-self-organizing.html)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

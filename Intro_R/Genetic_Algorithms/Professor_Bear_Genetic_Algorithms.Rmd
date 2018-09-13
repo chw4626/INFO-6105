@@ -1,0 +1,198 @@
+---
+title: "Genetic Algorithms"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+In this lesson we'll learn the theory behind using genetic algorithms as an optimization and search technique.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`   
+`install.packages("genalg");`   
+`install.packages("GA");` 
+
+```{r}
+require(ggplot2)
+require(genalg)
+require(GA)
+```
+
+
+# Data
+
+We will be using the [UCI Machine Learning Repository: Wine Data Set](https://archive.ics.uci.edu/ml/datasets/Wine).  These data are the results of a chemical analysis of wines grown in
+
+# Genetic Algorithms
+
+A genetic algorithm (GA) is a search heuristic that mimics the process of natural selection. This heuristic is often used to generate useful solutions to optimization and search problems.
+
+![ genetic algorithm (GA)](http://nikbearbrown.com/YouTube/MachineLearning/M07/GA.png)
+*Genetic algorithm (GA)*  
+
+## Genetic Algorithm Pseudocode 
+
+Create an initial population, typically random  
+
+While the best candidate so far is not a solution:  
+   Create new population using crossover and mutation.  
+   Evaluate the fitness of each candidate in the population.  
+   Replace/delete least-fit population  
+   
+Return the best candidate found
+
+
+## Genetic Algorithm Basic components
+
+* Candidate representation  
+    + Important to choose this well the form can effect the solution.  
+    + The typical candidate representation is a binary string.  
+* successor functions.  
+    + Mutation, crossover  
+    + Mutation - Given a candidate, return a slightly different candidate.  
+    + Crossover - Given two candidates, produce one that has elements of each.  
+* Fitness function  
+    + The fitness function quantitates estimates how close a candidate is to being a solution.  
+* Solution test  
+    + Check whether the candidate is a solution.
+* Some parameters  
+    + Population size  
+    + Generation limit  
+
+## Pros and Cons
+
+*Pros*  
+*  Fast (and low memory)  
+*  Finding a candidate representation and fitness function are the bulk of the work.  
+
+*Cons*   
+* Randomized (not guaranteed optimal or complete).   
+* Can get stuck on local maxima (crossover is intended to help get out of local maxima)   
+
+# Genetic Algorithms by hand in R
+
+Genetic Algorithms by hand in R
+
+```{r}
+# Function: f(x) = |x|+ cos(x)
+f <- function(x) abs(x)+cos(x)
+min=-25
+max=25
+curve(f, min, max)
+fit <- function(x) -f(x)
+Gene_Alg <- ga(type = "real-valued", fitness = fit, min = -25, max = 25)
+summary(Gene_Alg)
+plot(Gene_Alg)
+curve(f, -25, 25)
+abline(v = Gene_Alg@solution, lty = 3)
+
+#-----------------------          one-dimensional function      ------------------------
+
+# Function : f(x) = (x^2 + x)* cos(x)
+f <- function(x) (x^2+x)*cos(x)     # -15 < x < 15
+curve(f, -15, 15)
+# tracing function
+monitor <- function(obj)
+{
+  curve(f, -15, 15, main = paste("iteration =", obj@iter))
+  points(obj@population, obj@fitness, pch = 20, col = 2)
+  rug(obj@population, col = 2)
+  Sys.sleep(0.2)
+}
+## For the maximization of this function we may use f directly as the fitness function:
+Gene_Alg <- ga(type = "real-valued", fitness = f, min = -15, max = 15, monitor = monitor)
+## End(Not run)
+# or if you want to suppress the tracing
+Gene_Alg <- ga(type = "real-valued", fitness = f, min = -15, max = 15, monitor = NULL)
+summary(Gene_Alg)
+monitor(Gene_Alg)
+abline(v = Gene_Alg@solution, lty = 3)
+# -----------------         two-dimensional Rastrigin function   -----------------
+Rastrigin_Fun <- function(x1, x2)
+{
+   10 +x1^2 + x2^2 - 10*(cos(2*pi*x1) + cos(2*pi*x2))
+}
+x1 <- x2 <- seq(-5.12, 5.12, by = 0.1)
+f <- outer(x1, x2, Rastrigin_Fun)
+persp3D(x1, x2, f, theta = 50, phi = 20)
+filled.contour(x1, x2, f, color.palette = jet.colors)
+Gene_Alg <- ga(type = "real-valued", fitness = function(x) -Rastrigin_Fun(x[1], x[2]),
+         min = c(-5.12, -5.12), max = c(5.12, 5.12),
+         popSize = 50, maxiter = 100)
+
+summary(Gene_Alg)
+plot(Gene_Alg)
+
+```
+
+
+# Genetic Algorithms in R
+
+We will use Genetic Algorithms to solve the [ knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem). The version of the knapsack problem problem being solved is the 0-1 knapsack problem, which restricts the number $x_i$ of copies of each kind of item to zero or one. Given a set of n items numbered from 1 up to n, each with a weight $w_i$ and a value $v_i$, along with a maximum weight capacity $W$,
+
+$$
+maximize \sum_{i=1}^n v_i x_i
+subject to \sum_{i=1}^n w_i x_i \leq W and x_i \in \{0,1\}
+$$
+
+Here $x_i$ represents the number of instances of item i to include in the knapsack. Informally, the problem is to maximize the sum of the values of the items in the knapsack so that the sum of the weights is less than or equal to the knapsack's capacity.  
+
+```{r}
+knap <- data.frame(item = c( "oranges", "onions", "pocketknife", "beans","sleeping bag", "rope", "compass"), value = c(15, 2, 10, 20, 30, 10, 30), weight = c( 10, 1,1, 5, 7, 5, 1))
+head(knap)
+weight_limit <- 20
+#Each number in this binary string represents whether or not to take an item with you.
+#A value of 1 refers to putting the specific item in the knapsack while a 0 refers to leave the item at home. 
+chromosome = c(1, 0, 0, 1, 1, 0, 0)
+knap[chromosome == 1, ]
+#check what amount of surivival points this configuration sums up
+cat(chromosome %*% knap$value)
+#Define evaluation function
+evalFunc <- function(x) {
+  current_solution_value <- x %*% knap$value
+  current_solution_weight <- x %*% knap$weight
+  
+  if (current_solution_weight > weight_limit) 
+    return(0)
+  else return(-current_solution_value)
+}
+
+# choose the number of iterations, design and run the model
+iter = 100
+my_GA_Model <- rbga.bin(size = 7, 
+                        popSize = 200, 
+                        iters = iter, 
+                        mutationChance = 0.01, 
+                        elitism = T, 
+                        evalFunc = evalFunc)
+cat(summary(my_GA_Model))
+solution = c(0, 1, 1, 1, 1, 1, 1)
+knap[solution == 1, ]
+# solution vs available
+cat(paste(solution %*% knap$value, "/", sum(knap$value)))
+plot(my_GA_Model)
+```
+
+ 
+# Resources   
+
+* [Genetic algorithms: a simple R example](http://www.r-bloggers.com/genetic-algorithms-a-simple-r-example/)
+
+* [Genetic algorithms](http://www.obitko.com/tutorials/genetic-algorithms/index.php)
+
+* [Using Genetic Algorithms in Quantitative Trading](http://www.thertrader.com/2014/03/14/using-genetic-algorithms-in-quantitative-trading/)
+
+
+
+```
+
+
+
+
+

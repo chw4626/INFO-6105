@@ -1,0 +1,93 @@
+---
+title: "Boosting"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the how to implement Boosting in R.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("adabag");`    
+`install.packages("rpart");`    
+`install.packages("ada");`    
+
+```{r}
+library(adabag)
+library(rpart)
+library(ada)
+```
+
+# Data
+
+We will be using the [UCI Machine Learning Repository: Adult Data](https://archive.ics.uci.edu/ml/datasets/Adult) to predict whether income exceeds $50K/yr based on census data. Also known as "Census Income" dataset.
+
+```{r}
+data_url <- 'http://nikbearbrown.com/YouTube/MachineLearning/M09/adult.data.txt'
+# Adult data set from UCI 
+adult<- read.csv(url(data_url), header=FALSE)
+head(adult)
+names(adult)
+adult.len <- sample(1:nrow(adult), 3*nrow(adult)/4)
+head(adult.len)
+train <- adult[adult.len,]
+test <- adult[-adult.len,]
+head(train)
+head(test)
+```
+
+#  Boosting
+
+Boosting involves incrementally building an ensemble by training each new model instance to emphasize the training instances that previous models mis-classified. In these sense it "learns." Unlike Boosting, weights may change at the end of boosting round making certain learners more important than others. In some cases, boosting has been shown to yield better accuracy than Boosting, but it also tends tp propgate bias from the overweighting winning predictor and is more likely to over-fit the training data. By far, the most common implementation of Boosting is Adaboost.
+
+# Boosting in R
+
+```{r}
+# adabag package
+adult_boosting1 <- boosting(V15~., data=train, mfinal=20,
+                             control=rpart.control(maxdepth=5))
+adult_predict1 <- predict.boosting(adult_boosting1, newdata=test)
+adult_predict1$confusion
+accuracy <- 1- adult_predict1$error
+accuracy
+# ada package
+adult_boosting2 <- ada(V15~., data=train, 
+                       iter=50,nu=1)
+adult_predict2 <- predict(adult_boosting2, test)
+adult_predict_confusion <- confusionMatrix(adult_predict2, test$V15)
+adult_predict_confusion$table
+accuracy <- adult_predict_confusion$overall[1]
+accuracy
+```
+
+
+# Resources   
+
+* [An Attempt to Understand Boosting Algorithm(s) via @rbloggers](http://www.r-bloggers.com/an-attempt-to-understand-boosting-algorithms/)    
+
+* [Boosting](http://www.stat.cmu.edu/~ryantibs/datamining/lectures/25-boost.pdf)    
+
+* [boosting {adabag} | inside-R | A Community Site for R](http://www.inside-r.org/packages/cran/adabag/docs/boosting)    
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

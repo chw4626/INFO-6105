@@ -1,0 +1,460 @@
+---
+title: 'Professor Bear :: Web Scraping'
+author: "Professor Bear"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Web Scraping  
+
+[Web scraping](https://en.wikipedia.org/wiki/Web_scraping) (web harvesting or web data extraction) is a computer software technique of extracting information from websites. This is accomplished by either directly implementing the Hypertext Transfer Protocol (on which the Web is based), or embedding a web browser.
+
+Web scraping uses scripts to sift through a web page and gather the data such as text, images or urls. Web sites are written using HTML, which means that each web page is a structured document. How easy it is to parse data from a web page depends on how well structured that page is.  HTML tables, well named [Cascading Style Sheets (CSS)](https://en.wikipedia.org/wiki/Cascading_Style_Sheets) and well structured HTML can make the processing of parsing the data one wants much easier.
+
+Poorly structured HTML, logining into web forms, changing content depending of the DNS request can make the process of scraping much more difficult or impossible.
+
+Scraping a page involves these steps:
+
+1.  Making a [DNS](https://en.wikipedia.org/wiki/Domain_Name_System) request (i.e. making a domain name system (DNS) request of a url such as https://www.google.com/).  Note that making a request of a non-existent resource such as https://www.google.bear/ will result in an error. Websites can also block certain types of traffic and will often try to block web robots other than the big search engines.
+
+2. Fetching the HTML.
+
+3. Putting the HTML in to a searchable data structure such as a [DOM object](https://en.wikipedia.org/wiki/Document_Object_Model).
+
+4. Searching for patterns that match the data desired.
+
+5. Putting that data in to a database.
+
+The process of automatically crawling many pages is called [web crawling](https://en.wikipedia.org/wiki/Web_crawler) or web robots.
+
+## Additional packages needed
+ 
+To run the code in you may need additional packages.
+
+* If necessary install `ggplot2` package.
+
+`install.packages("ggplot2"); 
+`install.packages("rvest"); 
+
+```{r}
+library(ggplot2)
+library(rvest)
+library(dplyr)
+library(stringr)
+```
+
+## Packages for Web Scraping
+
+We will be using the following packages for web scraping and comparing them. Typically one wouldn't use so many packages that do similar things but here we want to explore how various approaches work.  
+
+* [rvest package](https://github.com/hadley/rvest)
+* [SelectorGadget tool](http://selectorgadget.com/)
+* [rvest and SelectorGadget guide](https://cran.r-project.org/web/packages/rvest/vignettes/selectorgadget.html)
+* [Awesome tutorial for CSS Selectors](http://flukeout.github.io/#)
+* rvest
+* Import.io
+* Google Chrome Webscraper
+* ScaperHub
+pacman
+
+## Amazon Reviews, Wikipedia, Indeed.com
+
+We will be scraping data from Amazon Reviews, Wikipedia, Indeed.com
+
+
+## Document Object Model (DOM)   
+
+The [Document Object Model (DOM)](https://en.wikipedia.org/wiki/Document_Object_Model) is a cross-platform and language-independent application programming interface that treats an HTML, XHTML, or XML document as a tree structure wherein each node is an object representing a part of the document.
+
+![Document Object Model (DOM)](https://upload.wikimedia.org/wikipedia/commons/5/5a/DOM-model.svg) 
+
+To effectively parse a web page we need tools for parsing text and well as parsing DOM objects.
+
+## HTML tags/nodes  
+
+HTML elements are written with a start tag, an end tag, and with the content in between: `<tag>content</tag>`. The tags which typically contain the textual content we wish to scrape. 
+
+Common tags include:
+
+- `<h1>`, `<h2>`,...,`<h6>`: Largest heading, second largest heading, etc.
+- `<p>`: Paragraph elements
+- `<ul>`: Unordered bulleted list
+- `<ol>`: Ordered list
+- `<li>`: Individual List item
+- `<div>`: Division or section
+- `<href>`: Url or hypertext link
+- `<span>`: Table or inline section
+- `<table>`: Table
+
+For example, if your data is wrapped with the HTML paragraph tag `<p>` and `</p>` we can use that structure to find our data.
+
+```
+<p>
+This is some text in a paragraph.
+</p>
+```   
+However there are often many paragraphs within an HTML page and sometimes we need more stucture to identify the paragraph with want. This is often provide by within tag attributes such as CSS styling. If our paragraph had a *.class selector* defining a paragraph as a *professor-name* we might leverage that structure.  
+
+```
+<p class="professor-name">
+Nik Bear Brown
+</p>
+```   
+To extract text or urls from a bls.gov.htm we often use structure provided by HTML tags. This means we often write the script for that type of page after looking at the internal structure of a websites pages.  
+
+## Cascading Style Sheets (CSS)
+
+[Cascading Style Sheets (CSS)](https://en.wikipedia.org/wiki/Cascading_Style_Sheets) is a style sheet language used for describing the presentation of a document written in a markup language.[1] Although most often used to set the visual style of web pages and user interfaces written in HTML and XHTML, the language can be applied to any XML document,
+
+![Cascading Style Sheets (CSS)](https://upload.wikimedia.org/wikipedia/commons/9/93/CSS-shade.svg) 
+
+### Scraping Amazon Reviews with rvest and CSS
+
+Lets scrape reviews from [R Cookbook by Paul Teetor](https://www.amazon.com/Cookbook-OReilly-Cookbooks-Paul-Teetor/dp/0596809158/). The reviews for the book are in the [review section](https://www.amazon.com/Cookbook-OReilly-Cookbooks-Paul-Teetor/product-reviews/0596809158/) 
+
+```{r}
+url <- "https://www.amazon.com/Cookbook-OReilly-Cookbooks-Paul-Teetor/product-reviews/0596809158/"
+```
+
+The rvest package can download the url.
+
+```{r}
+htm <- read_html(url)
+htm
+```
+
+If we look at the reviews on the reviews page we can see that they are contained within `<a>` tags (i.e. `<a>customer review</a>`).  
+
+```
+<a data-hook="review-title" class="a-size-base a-link-normal review-title a-color-base a-text-bold" href="/gp/customer-reviews/R2YEY6SQEXVLK9/ref=cm_cr_arp_d_rvw_ttl?ie=UTF8&ASIN=0596809158">Very nice reference book for R</a>
+```
+
+So maybe we can extract the text within `<a>` tags to get our reviews?
+
+### rvest html_nodes()
+
+Usage
+
+```
+html_nodes(x, css, xpath)
+html_node(x, css, xpath)
+```
+Arguments
+
+```
+x - Either a document, a node set or a single node.
+css, xpath Nodes to select. Supply one of css or xpath depending on whether you want to use a css or xpath 1.0 selector.
+```
+
+The [xpath selectors](https://www.w3.org/TR/xpath/) 
+
+### XPath selectors 
+
+Chaining with XPath is a little trickier - you may need to vary
+ the prefix you're using - // always selects from the root noot regardless of where you currently are in the doc.  We will hold off on going in to XPath syntax and start with simpler HTML tags.
+ 
+``` 
+htm %>%
+  html_nodes(xpath = "//center//font//b") %>%
+  html_nodes(xpath = "//b")
+```  
+Let's say we want all the `<a>` tags as we know our reviews are contained within `<a>` tags.
+
+```{r}
+htm %>%
+  html_nodes("a")
+```
+  
+
+#### Note Bien: Pipes `%>%` in R
+
+A side note, the syntax `htm %>% html_nodes("a")` may seem odd.  The `%>%` operator is called a pipe.
+
+he *%>%* (a.k.a: pipe) operator in R lets you transform nested function calls into a simple pipeline of operations that's easier to write and understand.
+
+You can use the %>% operator with standard R functions or your own functions. The rules are simple: the object on the left hand side is passed as the first argument to the function on the right hand side.
+
+For example:
+
+```
+my.data %>% my.function is the same as my.function(my.data)
+my.data %>% my.function(arg=value) is the same as my.function(my.data, arg=value)
+```
+
+In our example the syntax below can read as pass the data htm to the function html_nodes() with the paramater "a."
+```
+htm %>% html_nodes("a")
+```
+This is exactly equivelent to writing. 
+
+```{r}
+html_nodes(htm, "a")
+```
+
+While `html_nodes(htm, "a")` may seem simpler than `htm %>% html_nodes("a")`, try passing a function to a function to a function to a function to a function to a function. You'll see how much more readable the pipe syntax is as the number of operations increases.  
+
+So you want to next fucntions by chain subsetting this is far easier to read and write using the pipe syntax.  
+
+```
+htm %>% html_nodes("table") %>% html_nodes("td") %>% html_nodes("p")
+```
+  
+### CSS Selectors
+
+Selecting html_nodes() with the paramater "a" gives us a lot more irrelevant data than we want. While we could use regular expressions to filter our result set we can also use CSS selectors (if they are in the HTML). Let's look at the attributes within the `<a>` tags for reviews.
+
+```
+<a data-hook="review-title" class="a-size-base a-link-normal review-title a-color-base a-text-bold" href="/gp/customer-reviews/R2YEY6SQEXVLK9/ref=cm_cr_arp_d_rvw_ttl?ie=UTF8&ASIN=0596809158">Very nice reference book for R</a>
+```
+
+There are several classes in the review `class="a-size-base a-link-normal review-title a-color-base a-text-bold"`. Of these `.review-title` seems most specific to a review. So let's try `.review-title` to find only reviews.
+
+
+```{r}
+htm %>%
+  html_nodes(".review-title")
+```
+
+However we are getting both `<span>` and `<a>` with the class `.review-title` so let's try `.a-color-base` instead.   
+
+```{r}
+htm %>%
+  html_nodes(".a-color-base")
+```
+
+This look better but one really ones the text between the tags so let's use `html_text()` function to extract this data:
+
+```{r}
+review.titles <- htm %>%
+  html_nodes(".a-color-base") %>%
+  html_text()
+
+review.titles
+```
+
+One can grab the format (hardcover or paperback) with the class label `.a-size-mini.a-color-secondary`  
+ 
+```{r}
+htm %>%
+  html_nodes(".a-size-mini.a-color-secondary") %>%
+  html_text()
+```
+
+
+We can remove the `Format: ` with a regular expression.  
+
+```{r}
+formats <- htm %>%
+  html_nodes(".a-size-mini.a-color-secondary") %>%
+  html_text() %>%
+  str_replace("Format:[ ]+", "")
+
+formats
+```
+
+### Number of stars
+
+One can grab the format (hardcover or paperback) with the class label `.review-rating` combined with the class ID `#cm_cr-review_list` 
+
+```{r}
+htm %>%
+  html_nodes("#cm_cr-review_list .review-rating")
+```
+
+Let's look at the text within the tags.  
+
+```{r}
+htm %>%
+  html_nodes("#cm_cr-review_list .review-rating") %>%
+  html_text()
+```
+
+One can use regular expressions to extract the numbers 1-5.  
+
+```{r}
+htm %>%
+  html_nodes("#cm_cr-review_list .review-rating") %>%
+  html_text() %>%
+  str_extract("[1-5].[0-9]")
+```
+
+If one wants the use the numbers as numbers then one needs to create a numeric vector from a character vector.
+
+```{r}
+number.stars <- htm %>%
+  html_nodes("#cm_cr-review_list .review-rating") %>%
+  html_text() %>%
+  str_extract("[1-5].[0-9]") %>%
+  as.numeric(digits=2)
+
+number.stars
+```
+
+One can grab the number of people that found a review useful with the class label `.review-votes` combined with the class ID `#cm_cr-review_list` 
+
+```{r}
+htm %>%
+  html_nodes("#cm_cr-review_list .review-votes") %>%
+  html_text()
+```
+
+One can use regular expressions to extract the numbers that are now 0-??? then convert the string to numeric.
+
+```{r}
+number.helpful <- htm %>%
+  html_nodes("#cm_cr-review_list .review-votes") %>%
+  html_text() %>%
+  str_extract("[0-9]+") %>%
+  as.numeric()
+
+number.helpful
+```
+
+One can then aggregate the data in to a data frame.  
+
+```{r, eval=FALSE}
+htm.data <- data_frame(review.titles, formats, number.stars, number.helpful)
+
+htm.data
+```
+
+
+### Multiple pages
+
+One can get multiple pages of reviews by exploting the fact that Amazon expsoses the page number in the url with the `&pageNumber=` parameter.  The issue is without looking at a page we don't know how many pages of reviews that a book has.  
+
+Typically scraping multiple pages would use a while loop which adds a page every step (e.g.  `&pageNumber=2`, `&pageNumber=3`, `&pageNumber=4`, etc. ) and check the number of reviews returned on each page. As soon as zero reviews are returned one would break out of the loop and stop.  
+
+## Scraping a list on a web page  
+
+Let's scrap a list of machine learning concepts from the [Wikipedia](https://en.wikipedia.org) page [https://en.wikipedia.org/wiki/List_of_machine_learning_concepts](https://en.wikipedia.org/wiki/List_of_machine_learning_concepts).
+
+
+```{r}
+scraping_wiki <- read_html("https://en.wikipedia.org/wiki/List_of_machine_learning_concepts")
+li_text <- scraping_wiki %>%
+        html_nodes("li") %>%
+        html_text()
+length(li_text)
+li_text[1:5]
+```
+
+## Scraping HTML tables
+
+HTML tables are often a source of data that one would one to scrape.  
+
+```{r}
+bls.gov.htm <- read_html("http://www.bls.gov/web/empsit/cesbmart.htm")
+
+bls.gov.tbls <- html_nodes(bls.gov.htm, "table")
+
+head(bls.gov.tbls)
+```
+
+ To parse the HTML table data we use `html_table()`, rather than `html_text()`. For example, if we want the data from `id="Table3"` which is the fourth element in the list of tables. (i.e.  `[4] <table id="Table3" class="regular"><caption><span class="tableTitle" ...`)
+ 
+```{r}
+bls.gov.tbls.4 <- bls.gov.htm %>%
+        html_nodes("table") %>%
+        .[4] %>%
+        html_table(fill = TRUE)
+str(bls.gov.tbls.4)
+head(bls.gov.tbls.4)
+```
+
+## HTTP Request Methods: GET and POST
+
+Two commonly used methods for a request-response between a client and server are: GET and POST. HTTP POST requests supply additional data from the client (browser) to the server in the message body. In contrast, GET requests include all required data in the URL. 
+
+* GET - Requests data from a specified resource   
+* POST - Submits data to be processed to a specified resource   
+
+### The GET Method  
+
+Note that the query string (name/value pairs) is sent in the URL of a GET request:
+
+```
+/test/demo_form.asp?name1=value1&name2=value2
+Some other notes on GET requests:
+```
+
+* GET requests can be cached   
+* GET requests remain in the browser history   
+* GET requests can be bookmarked  
+* GET requests should never be used when dealing with sensitive data  
+* GET requests have length restrictions  
+* GET requests should be used only to retrieve data  
+
+### The POST Method  
+
+Note that the query string (name/value pairs) is sent in the HTTP message body of a POST request:
+
+```
+POST /test/demo_form.asp HTTP/1.1
+Host: w3schools.com
+name1=value1&name2=value2
+Some other notes on POST requests:
+```
+
+* POST requests are never cached   
+* POST requests do not remain in the browser history  
+* POST requests cannot be bookmarked   
+* POST requests have no restrictions on data length  
+
+
+## Scraping indeed.com for jobs using GET
+
+Scraping indeed.com for jobs would be the basis of a job bot.
+```{r}
+url <- "http://www.indeed.com/jobs?q=data+scientist&start="
+number <- seq(from = 10, to = 100, by = 10)
+urls <- sapply(number, function(x) paste0(url, x))
+urls
+len <- length(urls)
+indeed.com.jobs <- data.frame(Title=character(),
+                 Company=character(), 
+                 Location=character(), 
+                 Summary=character(),                  
+                 stringsAsFactors=FALSE)
+for(i in 1:len) {
+  indeed.com.htm <- read_html(urls[len])
+  title <- indeed.com.htm %>% html_nodes(".jobtitle .turnstileLink") %>% html_text()
+  company <- indeed.com.htm %>% html_nodes(".company span") %>% html_text()
+  location <- indeed.com.htm %>% html_nodes(".location > span") %>% html_text()
+  summary <- indeed.com.htm %>% html_nodes(".snip div .summary") %>% html_text()
+  scratch <- data.frame(Title = title, Company = company,
+                      Location = location, Summary = summary)
+  indeed.com.jobs <- rbind(indeed.com.jobs, scratch) 
+}
+
+dim(indeed.com.jobs)
+head(indeed.com.jobs)
+indeed.com.jobs[,1:4] <- lapply(indeed.com.jobs[,1:4], str_trim)
+head(indeed.com.jobs)
+head(indeed.com.jobs[,1:3])
+
+```
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+

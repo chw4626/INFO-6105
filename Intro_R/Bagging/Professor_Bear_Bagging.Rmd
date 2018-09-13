@@ -1,0 +1,110 @@
+---
+title: "Bagging"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the how to implement Bagging in R.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages('randomForest');`    
+`install.packages('caret');`    
+`install.packages('rpart');`    
+`install.packages('adabag');`     
+`install.packages('ipred');`     
+
+```{r}
+library(randomForest)
+library(caret)
+library(rpart)
+library(adabag) 
+library(ipred)
+```
+
+
+# Data
+
+We will be using the [UCI Machine Learning Repository: Adult Data](https://archive.ics.uci.edu/ml/datasets/Adult) to predict whether income exceeds $50K/yr based on census data. Also known as "Census Income" dataset.
+
+```{r}
+data_url <- 'http://nikbearbrown.com/YouTube/MachineLearning/M09/adult.data.txt'
+# Adult data set from UCI 
+adult<- read.csv(url(data_url), header=FALSE)
+head(adult)
+names(adult)
+adult.len <- sample(1:nrow(adult), 3*nrow(adult)/4)
+head(adult.len)
+train <- adult[adult.len,]
+test <- adult[-adult.len,]
+head(train)
+head(test)
+```
+
+#  Bootstrap aggregating (bagging)
+
+Create ensembles by [bootstrap aggregation](https://en.wikipedia.org/wiki/Bootstrap_aggregating), i.e., repeatedly randomly re-sampling training data. Not that bagging uses the same learner so bias related to the method isn't addressed by this approach. 
+
+Bootstrap: draw n items from X with replacement
+
+Bootstrap aggregating: combines random learners (often with voting, averaging or median) to create a predictor lesss efected by noise. Unstable and/or noisy algorithms often profit from bagging.
+
+Bagging's usefulness depends on the stability of the base classifiers.  If small changes in the sample cause small changes in the base-level classifier, then the ensemble will not be much better than the base classifiers. It reduces variance and helps to avoid overfitting. It is often applied to decision tree methods (random forests) and nearest neighbor classifiers, but it can be used with any type of method.  
+
+# Bagging in R
+
+```{r}
+adult_bagging <- randomForest(V15~.,data=adult, subset=adult.len, mtry=14, importance=TRUE)
+plot(adult_bagging)
+adult_predict <- predict(adult_bagging, test)
+adult_predict_confusion <- confusionMatrix(adult_predict, test$V15)
+adult_predict_confusion$table
+accuracy <- adult_predict_confusion$overall[1]
+accuracy
+# importance of predictors
+adult_bagging$importance
+# ipred package
+adult_bagging <- ipredbagg(train$V15, X=train[,-15], nbagg=25, 
+                           control=rpart.control(minsplit=2, cp=0, xval=0), 
+                           comb=NULL, coob=FALSE, ns=length(train$V15), keepX = TRUE)
+adult_predict <- predict(adult_bagging, test)
+adult_predict_confusion <- confusionMatrix(adult_predict, test$V15)
+adult_predict_confusion$table
+accuracy <- adult_predict_confusion$overall[1]
+accuracy
+```
+
+
+
+# Resources   
+
+* [Improve Predictive Performance in R with Bagging via @rbloggers](http://www.r-bloggers.com/improve-predictive-performance-in-r-with-bagging/)    
+
+* [bagging {adabag} | inside-R | A Community Site for R](http://www.inside-r.org/packages/cran/adabag/docs/bagging)    
+
+* [bagging {ipred} | inside-R | A Community Site for R](http://www.inside-r.org/packages/cran/ipred/docs/bagging)    
+
+* [Bagging / Bootstrap Aggregation with R](http://amunategui.github.io/bagging-in-R/)    
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

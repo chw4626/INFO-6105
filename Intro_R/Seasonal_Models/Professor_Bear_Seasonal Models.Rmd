@@ -1,0 +1,181 @@
+---
+title: "Seasonal Models"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the how to implement Seasonal Models in R.
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("ggplot2");`    
+`install.packages("forecast");`    
+`source(url("http://lib.stat.cmu.edu/general/tsa2/Rcode/itall.R"))  `    
+    
+
+```{r}
+library(ggplot2)
+library(forecast)
+source(url("http://lib.stat.cmu.edu/general/tsa2/Rcode/itall.R")) 
+```
+
+
+# Data
+
+We will be using U.S. Department of the Interior monthly flow data for the Colorado River. see 
+http://www.usbr.gov/lc/region/g4000/NaturalFlow/documentation.html
+
+
+```{r}
+data_url <- 'http://nikbearbrown.com/YouTube/MachineLearning/M11/colorado_river.csv'
+data<-read.csv(url(data_url))
+head(data)
+names(data)
+```
+
+# Seasonal Models
+
+When there are patterns that repeat over known, fixed periods of time (i.e. day, week, month, quarter, year, etc.) within the data set it is considered to be seasonal variation. One has a model for the periodic fluctuations based on knowledge of the domain.   
+
+The seasonal ARIMA model incorporates both non-seasonal and seasonal factors in a multiplicative model.  In a seasonal ARIMA model, seasonal parameters predict xt using data values and errors at times with lags that are multiples of S (the span of the seasonality).  Before we model for a given data set, one must have an initial guess about the data generation process, that is the span of the seasonality (i.e.day, week, month, quarter, year, etc.)  
+
+
+# Seasonal Models in R
+
+Here we are using an ARIMA model to identify seasonality trends by looking for signficant seasonal differences.  
+
+```{r}
+plot(data[,3], type='o') 
+#  it is difficult to identify seasonality trends here
+# So,aggregate the data by month to better understand this trend
+ggplot(data, aes(x=month, y=flow/1000))+
+  stat_summary(geom = 'line', fun.y='mean')+             # take the mean of each month
+  scale_x_discrete(breaks=seq(1,12,1), labels=seq(1,12,1))+
+  theme_bw()+ # add a little style
+  facet_wrap(~year) # visualize year by year
+#Since we hypothesize that there is seasonality,
+#we can take the seasonal difference (create a variable that gives the 12TH differences), then look at the ACF and PACF.
+mydata<-ts(data[1:72,][,3])
+diff_12 <- diff(mydata, 12)
+acf2(diff_12, 48)
+#we see that for both the ACF and PACF we have significant autocorrelation at seasonal (12, 24, 36) lags. The ACF has a cluster around 12, 
+#and not much else besides a tapering pattern throughout. Further, the PACF also has spikes on two multiples of S, AR(2)
+# Try, ARIMA (1,0, 0) x (2, 1, 0)12
+mydata<-ts(mydata, freq=12)
+mod1<-sarima(mydata, 1,0,0,2,1,0,12)
+# install.packages("forecast")
+# Fit the Model
+mod<-Arima(mydata,order=c(1, 0, 0),
+            seasonal=list(order=c(2, 1, 0), period=12))
+mod
+plot(fitted(mod), mod$residuals)
+plot(mod$x, col='red')
+lines(fitted(mod), col='blue')
+# Now, we have a reasonable prediction, we can forecast the model, say 24 months into the future.
+sarima.for(mydata, 24, 1,0,0,2,1,0,12)
+predict(mod, n.ahead=24)
+```
+
+
+# Resources   
+
+* [Seasonal ARIMA models | STAT 510](https://onlinecourses.science.psu.edu/stat510/node/67)    
+
+* [Identifying Seasonal Models and R Code | STAT 510](https://onlinecourses.science.psu.edu/stat510/node/68)    
+
+* [Seasonal ARIMA models | OTexts](https://www.otexts.org/fpp/8/9)    
+
+* [General seasonal ARIMA models](http://people.duke.edu/~rnau/seasarim.htm)    
+* [Modeling Seasonal Time Series - Hu-berlin.de](http://fedc.wiwi.hu-berlin.de/xplore/tutorials/xegbohtmlnode44.html)    
+
+# References
+
+The data, R code and lessons are based upon:   
+
+
+1.  Time Series Analysis :    
+
+Data Source: http://www.geophysics.geol.uoa.gr/catalog/catgr_20002008.epi    
+
+Code References :   
+ 
+Book : Mastering Predictive Analytic with R    
+Author: Rui Miguel Forte    
+https://www.safaribooksonline.com/library/view/mastering-predictive-analytics/9781783982806/     
+
+Chapter 9: Time series Analysis    
+
+
+http://www.statoek.wiso.uni-goettingen.de/veranstaltungen/zeitreihen/sommer03/ts_r_intro.pdf   
+
+http://www.stat.pitt.edu/stoffer/tsa3/R_toot.htm    
+
+http://www.statoek.wiso.uni-goettingen.de/veranstaltungen/zeitreihen/sommer03/ts_r_intro.pdf   
+
+
+2. Trend Analysis    
+
+Code References :   
+ 
+Book : Mastering Predictive Analytic with R    
+Author: Rui Miguel Forte   
+https://www.safaribooksonline.com/library/view/mastering-predictive-analytics/9781783982806/    
+
+http://www.r-bloggers.com/seasonal-trend-decomposition-in-r/   
+
+
+3. Seasonal Models   
+
+ Code references :    
+
+ Book: Time Series Analysis and Its Applications   
+ Author: Robert H. Shumway . David S. Stoffer   
+Link: http://www.springer.com/us/book/9781441978646#otherversion=9781461427599   
+
+http://a-little-book-of-r-for-time-series.readthedocs.org/en/latest/src/timeseries.html    
+                 
+https://onlinecourses.science.psu.edu/stat510/?q=node/47   
+                
+https://rpubs.com/ryankelly/tsa5   
+                 
+https://onlinecourses.science.psu.edu/stat510/node/68   
+
+
+
+Data Reference : https://github.com/RMDK/TimeSeriesAnalysis/blob/master/colorado_river.csv  
+
+
+
+4.  Spectral Analysis   
+
+Code References:   
+Book:  
+Modern Applied Statistics with S Fourth edition   
+Author:  W. N. Venables and B. D. Ripley  
+Link: Modern Applied Statistics with S Fourth edition   
+
+
+http://www.maths.adelaide.edu.au/patty.solomon/TS2004/tsprac3_2004.pdf   
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```

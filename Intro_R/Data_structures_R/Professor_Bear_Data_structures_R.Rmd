@@ -1,0 +1,209 @@
+---
+title: "Professor Bear - R Data structures"
+output:
+  html_document: default
+  word_document: default
+---
+
+
+**Table of Contents**  
+[Section 1.1: Data structures in R](#data-structures-in-r)  
+[Section 1.1.1: Vectors](#vectors)  
+[Section 1.1.1: Lists](#lists)  
+[Section 1.1.1: Arrays](#arrays)  
+[Section 1.1.1: Matrices](#matrices)  
+[Section 1.1.1: Data frames](#data-frames)  
+
+##1.1: Data structures in R  
+
+Data Structures are the programmatic way of storing data so that data can be used efficiently. One can think of a data structure as a container for data. 
+
+##1.1.1: Vectors  
+
+Usually when you create variables in R, you create **vectors**. A vector is simply a set of elements *of the same class* (e.g. character, numeric, integer, or logical -as in True/False). It is the basic data structure in R. Most commonly, you will use the `c()` function (c stands for concatenate) to create vectors.
+:
+
+```{r}
+v1 <- c(1,2,3,4,5) #creates a numeric vector
+v1
+v2 <- c(1L, 2L) #creates an integer vector
+v2
+v3 <- c(TRUE, FALSE) #creates a logical vector
+v3
+v4 <- c("a", "b", "c") #creates a character vector
+v4
+v5 <- c(1+0i, 3+5i) #creates a complex vector 
+v5
+
+```
+
+*Operations on vectors*
+
+Once you have a vector (or a list of numbers) in memory most basic operations are available. This makes R very powerful.
+
+```{r}
+v1 
+v1 + 5 # add 5 to each of the numbers
+v1*3 # Multiply each of the numbers by 3
+v1/3 # Divide each of the numbers by 3
+log(v1) # Take the log of each of the numbers
+```
+
+We can even add vectors to vectors.
+
+```{r}
+a <- c(1,2,3)
+a
+b <-  c(1,2,3,4,5)
+b
+a+b
+```
+
+If the lengths of the vectors differ then you may get an error message, a warning message and unpredictable results. It is best if they are the same length.
+
+```{r}
+a <- c(1,2,3)
+a
+length(a)
+b <-  c(3,4,5)
+b
+length(b)
+a+b
+```
+
+
+If you mix in a vector elements that are of a different class (for example numerical and logical), R will **coerce** to the minimum common denominator, so that every element in the vector is of the same class. 
+
+```{r}
+b <- c(33, "bear")
+class(b)
+```
+
+
+Note what happens when a vector is placed in another vector.
+
+```{r}
+x <- c(2, 3, 5)
+x
+class(x)
+y <- c(6, x, 2)
+y
+class(y)
+```
+
+
+
+##1.1.1: Lists  
+
+A list is a generic data structure containing other objects. Unlike a vector it allows us to create a mixed data sequence. 
+
+```{r}
+w <-  c(1, 2, 3) 
+w
+class(w)
+x <- c("a", "b", "c", "d", "e") 
+x
+class(x)
+y <- c(TRUE, FALSE, TRUE, FALSE) 
+y
+z <- list(w, y, x, 33, "bear", FALSE) # create a mixed data type list
+z
+class(z)
+
+```
+
+*List Slicing*
+
+We use the single square bracket "[]" operator to access elements at the first level of a list. The index 1 is the first element. We use the doubkle square bracket "[]" operator to access elements at the second level, etc.
+
+```{r}
+z
+z[1] # First element 
+z[[2]] # cond element 
+z[[2]][1] # First element of the second element 
+
+```
+
+
+
+##1.1.1: Arrays  
+
+Vectors are one-dimensional arrays in R and matrices are two-dimensional arrays in R. We can create n-dimensional arrays as a set of stacked matrices of identical dimensions. This will be discuss in the [matrices](#matrices) section below. The term arrays is discussed here becuase most programming languages use the term array. The reason R uses the term vector, is the basic operations can be applied to vectors whereas most programming languages use functions and loops to apply operations to arrays.  
+
+##1.1.1: Matrices  
+
+Matrices are n-dimensional vectors (usually two-dimensional). We build matrices from vectors (one-dimensional arrays). You can create a matrix in two ways. By using the command *matrix*.
+```{r}
+x<-matrix(c(1,2,3,4,5,6), nrow = 2, ncol = 3)
+x
+class(x)
+```
+
+Or using *cbind()* or *rbind()* to add columns or rows to a vectors.
+
+```{r}
+x <- c(1, 2, 3)         # Creates a vector `x' of 3 values.
+x
+class(x)
+y <- c(55, 33, 11)         # Creates another vector `y' of 3 values.
+y
+class(y)
+a<-rbind(x, y) # Creates a 2 x 3 matrix.  Note that the rows are appended
+a
+class(a)
+b<-cbind(x, y)   # Creates a 3 x 2 matrix.  Note that the columns are appended
+b
+class(b)
+```
+
+*Matrix element access*
+
+As with vectors, square brackets extract specific values from a matrix but more values are used within the brackets seperated by commas for each diminasion.
+
+ 
+```{r}
+b
+b[,2] # Extracts the second column
+b[1,]  # Extracts the first row
+b[1,2] # Extracts element in the first row and the second column
+b[1,2]<=55 # Recplaces the element in the first row and the second column with 55
+b
+b[1,] <- c(3,3) # Replaces the first row 
+b
+```
+
+
+*Matrix operations and functions*
+
+R supports a variety of matrix functions, including: det(), which returns the matrix's determinant; t(), which transposes the matrix; solve(), which inverts the the matrix; dim() command returns the dimensions of your matrix. 
+```{r}
+b
+dim(b)
+```
+
+##1.1.1: Data frames  
+
+A data frame is used for storing data tables of mixed data type. Typically, data from an excel sheet will be imported in to R as a data frame. We will use the built-in data set “InsectSprays” to discuss data frames.
+
+```{r}
+data(InsectSprays)
+names(InsectSprays)
+head(InsectSprays,3)
+dim(InsectSprays)
+nrow(InsectSprays) 
+ncol(InsectSprays) 
+levels(InsectSprays$spray)
+summary(InsectSprays)
+```
+
+##1.17: Further resources  
+
+[LearnR](https://youtu.be/p3i7Kz6C_-4?list=PLFAYD0dt5xCwDNFdrqeNoU9t-nhAWkbKe)  
+
+
+[Try R @codeschool](http://tryr.codeschool.com)  
+
+[Datacamp R Tutorials](https://www.datacamp.com/)   
+
+
+[rstudio online learning](https://www.rstudio.com/online-learning/)  

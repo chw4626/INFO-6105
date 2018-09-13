@@ -1,0 +1,266 @@
+---
+title: "Spectral Analysis"
+author: "Nik Bear Brown"
+output:
+  html_document: default
+  word_document: default
+---
+
+In this lesson we'll learn the how to implement Spectral Analysis in R.
+
+
+# Additional packages needed
+ 
+To run the code you may need additional packages.
+
+* If necessary install the followings packages.
+
+`install.packages("TSA");`     
+
+```{r}
+library(TSA)
+```
+
+
+# Data
+
+We will be using two data sets:
+
+  A. Monthly Deaths from Lung Diseases in the UK. It consists of three time series giving the monthly deaths from bronchitis, emphysema and asthma in the UK, 1974-1979, both sexes (ldeaths), males (mdeaths) and females (fdeaths).    
+
+  B. A regular time series giving the luteinizing hormone in blood samples at 10 mins intervals from a human female, 48 samples.
+
+
+```{r}
+data(lh)
+lh
+head(lh)
+names(lh)
+data(UKLungDeaths)
+deaths <- ts.union(mdeaths, fdeaths)
+head(deaths) 
+names(deaths)
+```
+
+# Spectral Analysis
+
+
+Spectral analysis or Spectrum analysis is based on the analysis of frequencies rather than fluctuations of numbers. In statistical signal processing, the goal of spectral density estimation (SDE) is to estimate the spectral density (also known as the power spectral density) of a random signal from a sequence of time samples of the signal. Intuitively speaking, the spectral density characterizes the frequency content of the signal. One purpose of estimating the spectral density is to detect any periodicities in the data, by observing peaks at the frequencies corresponding to these periodicities.
+
+ statistics and signal processing, an algorithm that estimates the strength of different frequency components (the power spectrum) of a time-domain signal. This may also be called frequency domain analysis. There are many approaches to spectral density. Below is a partial list of parametric and non-parametric spectral density estimation techniques.
+ 
+Non-parametric spectral density estimation techniques:   
+
+* Periodogram, the basic modulus-squared of the discrete Fourier transform   
+* Bartlett's method is the average of the periodograms taken of multiple segments of the signal to reduce variance of the spectral density estimate  
+Welch's method a windowed version of Bartlett's method that uses overlapping segments   
+* Multitaper is a periodogram-based method that uses multiple tapers, or windows, to form independent estimates of the spectral density to reduce variance of the spectral density estimate    
+* Least-squares spectral analysis, based on least squares fitting to known frequencies    
+* Non-uniform discrete Fourier transform is used when the signal samples are unevenly spaced in time   
+* Singular spectrum analysis is a nonparametric method that uses a singular value decomposition of the covariance matrix to estimate the spectral density
+Short-time Fourier transform   
+
+Parametric spectral density estimation techniques:      
+
+* Autoregressive model (AR) estimation, which assumes that the nth sample is correlated with the previous p samples.    
+* Moving-average model (MA) estimation, which assumes that the nth sample is correlated with noise terms in the previous p samples.    
+* Autoregressive moving average (ARMA) estimation, which generalizes the AR and MA models.   
+* Maximum entropy spectral estimation is an all-poles method useful for SDE when singular spectral features, such as sharp peaks, are expected.   
+
+
+# Periodogram
+
+Gvien a signal that is sampled at N different times, with the samples uniformly spaced by $\Delta t$, giving values $x_n$. Since the power spectral density of a continuous function defined on the entire real line is the modulus squared of its Fourier transform, the simplest technique to estimate the spectrum is the periodogram, given by the modulus squared of the discrete Fourier transform,    
+
+$$
+S(f)=\frac{\Delta t}{N} \left| \sum_{n=0}^{N-1} x_n e^{-i2\pi n f} \right|^2, \qquad -\frac{1}{2\Delta t} < f \le \frac{1}{2\Delta t}
+$$
+
+where $1/(2\Delta t)$ is the Nyquist frequency. The name "periodogram" was coined by Arthur Schuster in 1898. Despite the simplicity of the periodogram, the method suffers from severe deficiencies. It is an inconsistent estimator because it does not converge to the true spectral density as $N\rightarrow\infty$. It exhibits very high spectral leakage although this can be reduced by multiplying $x_n$ by a window function. In the presence of additive noise, the estimate has a positive bias.
+
+# Fourier analysis
+
+[Fourier analysis](https://en.wikipedia.org/wiki/Fourier_analysis) is the study of the way general functions may be represented or approximated by sums of simpler trigonometric functions. Fourier analysis grew from the study of Fourier series. A [Fourier series](https://en.wikipedia.org/wiki/Fourier_series) is a way to represent a (wave-like) function as the sum of simple sine waves
+
+If, s(x) denotes a function of the real variable x, and s is integrable on an interval [x0, x0 + P], for real numbers x0 and P. We will attempt to represent  s  in that interval as an infinite sum, or series, of harmonically related sinusoidal functions. Outside the interval, the series is periodic with period P (frequency 1/P). It follows that if s also has that property, the approximation is valid on the entire real line. We can begin with a finite summation (or partial sum):
+
+$$
+s_N(x) = \frac{A_0}{2} + \sum_{n=1}^N A_n\cdot \sin(\tfrac{2\pi nx}{P}+\phi_n), \quad \scriptstyle \text{for integer}\ N\ \ge\ 1.
+$$
+
+$s_N(x)$  is a periodic function with period P.  Using the identities:
+
+$$
+\sin(\tfrac{2\pi nx}{P}+\phi_n) \equiv \sin(\phi_n) \cos(\tfrac{2\pi nx}{P}) + \cos(\phi_n) \sin(\tfrac{2\pi nx}{P})
+$$
+$$
+\sin(\tfrac{2\pi nx}{P}+\phi_n) \equiv \text{Re}\left\{\frac{1}{i}\cdot e^{i \left(\tfrac{2\pi nx}{P}+\phi_n\right)}\right\} = \frac{1}{2i}\cdot e^{i \left(\tfrac{2\pi nx}{P}+\phi_n\right)} +\left(\frac{1}{2i}\cdot e^{i \left(\tfrac{2\pi nx}{P}+\phi_n\right)}\right)^*,
+$$
+
+Function s(x) (in red) is a sum of six sine functions of different amplitudes and harmonically related frequencies. Their summation is called a Fourier series. The Fourier transform, S(f) (in blue), which depicts amplitude vs frequency, reveals the 6 frequencies and their amplitudes.
+
+# Spectral Analysis in R
+
+```{r}
+tsp(mdeaths)
+start(mdeaths)
+end(mdeaths)
+frequency(mdeaths)
+cycle(deaths)
+# Plot time series
+par(mfrow = c(2, 2))
+ts.plot(lh)
+ts.plot(deaths, mdeaths, fdeaths,
+          lty = c(1, 3, 4), xlab = "year", ylab = "deaths")
+#obtain quarterly sums or annual means of deaths
+aggregate(deaths, 1,sum)
+aggregate(deaths, 1, mean)
+#Second-Order Summaries
+#acf for multiple time series:
+acf(lh)
+acf(lh, type = "covariance")
+acf(deaths)
+acf(ts.union(mdeaths, fdeaths))
+#Note: spectrum by de-fault removes a linear trend from the series before estimating the spectral density
+par(mfrow = c(2, 2))
+spectrum(lh)
+spectrum(deaths)
+#deaths.spec <- spectrum(deaths, plot=FALSE)
+#deaths.spec$spec     # these are the periodogram ordinates for both series
+#deaths.spec$freq     # these are the frequencies omega
+#The function spectrum also produces smoothed plots, using repeated
+#smoothing with modified Daniell smoothers (Bloomfield, 2000, p. 157), which
+#are moving averages giving half weight to the end values of the span. Trial-and-
+#error is needed to choose the spans
+# The function spectrum estimates of the spectral density at frequencies 
+par(mfrow = c(2, 2))
+spectrum(lh)
+spectrum(lh, spans = 3)
+spectrum(lh, spans = c(3, 3))
+spectrum(lh, spans = c(3, 5))
+spectrum(mdeaths)
+spectrum(mdeaths, spans = c(3, 3))
+spectrum(mdeaths, spans = c(3, 5))
+spectrum(mdeaths, spans = c(5, 7))
+# plot the cumulative periodogram
+cpgram(lh)
+cpgram(mdeaths)
+cpgram(fdeaths)
+# ARIMA models
+acf(lh, type = "partial")
+acf(deaths, type = "partial")
+# Model Fitting 
+lh.ar1 <- ar(lh, aic = F, order.max = 1)
+cpgram(lh.ar1$resid, main = "AR(1) fit to lh")
+lh.ar <- ar(lh, order.max = 9)
+lh.ar$aic
+cpgram(lh.ar$resid, main = "AR(3) fit to lh")
+lh.arima1 <- arima(lh, order = c(1,0,0))
+tsdiag(lh.arima1)
+lh.arima3 <- arima(lh, order = c(3,0,0))
+tsdiag(lh.arima3)
+lh.arima11 <- arima(lh, order = c(1,0,1))
+tsdiag(lh.arima11)
+##-----------------Forecasting ------------------------
+lh.fore <- predict(lh.arima3, 12)
+ts.plot(lh, lh.fore$pred, lh.fore$pred + 2*lh.fore$se,
+        lh.fore$pred - 2*lh.fore$se)
+```
+
+
+
+# Resources   
+
+* [Spectral Analysis](https://onlinecourses.science.psu.edu/stat510/?q=book/export/html/57)      
+
+* [R Time Series Tutorial](http://www.stat.pitt.edu/stoffer/tsa3/R_toot.htm)    
+
+* [Time Series Analysis with R](http://www.stats.uwo.ca/faculty/aim/tsar/tsar.pdf)    
+
+* [Spectral Analysis - The R Book - Safari Books Online](https://www.safaribooksonline.com/library/view/the-r-book/9780470510247/ch022-sec008.html)    
+
+
+# References
+
+The data, R code and lessons are based upon:   
+
+
+1.  Time Series Analysis :    
+
+Data Source: http://www.geophysics.geol.uoa.gr/catalog/catgr_20002008.epi    
+
+Code References :   
+ 
+Book : Mastering Predictive Analytic with R    
+Author: Rui Miguel Forte    
+https://www.safaribooksonline.com/library/view/mastering-predictive-analytics/9781783982806/     
+
+Chapter 9: Time series Analysis    
+
+
+http://www.statoek.wiso.uni-goettingen.de/veranstaltungen/zeitreihen/sommer03/ts_r_intro.pdf   
+
+http://www.stat.pitt.edu/stoffer/tsa3/R_toot.htm    
+
+http://www.statoek.wiso.uni-goettingen.de/veranstaltungen/zeitreihen/sommer03/ts_r_intro.pdf   
+
+
+2. Trend Analysis    
+
+Code References :   
+ 
+Book : Mastering Predictive Analytic with R    
+Author: Rui Miguel Forte   
+https://www.safaribooksonline.com/library/view/mastering-predictive-analytics/9781783982806/    
+
+http://www.r-bloggers.com/seasonal-trend-decomposition-in-r/   
+
+
+3. Seasonal Models   
+
+ Code references :    
+
+ Book: Time Series Analysis and Its Applications   
+ Author: Robert H. Shumway . David S. Stoffer   
+Link: http://www.springer.com/us/book/9781441978646#otherversion=9781461427599   
+
+http://a-little-book-of-r-for-time-series.readthedocs.org/en/latest/src/timeseries.html    
+                 
+https://onlinecourses.science.psu.edu/stat510/?q=node/47   
+                
+https://rpubs.com/ryankelly/tsa5   
+                 
+https://onlinecourses.science.psu.edu/stat510/node/68   
+
+
+
+Data Reference : https://github.com/RMDK/TimeSeriesAnalysis/blob/master/colorado_river.csv  
+
+
+
+4.  Spectral Analysis   
+
+Code References:   
+Book:  
+Modern Applied Statistics with S Fourth edition   
+Author:  W. N. Venables and B. D. Ripley  
+Link: Modern Applied Statistics with S Fourth edition   
+
+
+http://www.maths.adelaide.edu.au/patty.solomon/TS2004/tsprac3_2004.pdf   
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```
